@@ -54,7 +54,7 @@
       <div class="flex space-x-6" id="tab-nav">
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Schemes</button>
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="detail" onclick="switchTab('detail')">Scheme Detail</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="execution" onclick="switchTab('execution')">Execution</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="execution" onclick="switchTab('execution')">Execution</button>
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="result" onclick="switchTab('result')">Result</button>
       </div>
     </div>
@@ -103,7 +103,7 @@
       </div>
 
       <!-- Filters -->
-      <div class="flex flex-wrap items-center gap-3 mb-4">
+      <div class="flex flex-wrap items-center gap-3 mb-4 hidden">
         <span class="text-sm text-gray-600">Filter by status:</span>
         <select id="scheme-status-filter" onchange="renderSchemeList()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
           <option value="all">All</option>
@@ -125,7 +125,6 @@
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Name</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Region</th>
               <th class="text-right px-4 py-3 text-xs font-medium text-gray-500">Gap</th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Status</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Created</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Actions</th>
             </tr>
@@ -1003,7 +1002,7 @@
               <h3 class="font-bold text-gray-900" id="result-scheme-name">Scheme Name</h3>
               <p class="text-sm text-gray-500" id="result-scheme-meta">ID · Region · Created</p>
             </div>
-            <div class="text-right">
+            <div class="text-right hidden">
               <div class="text-xs text-gray-500">Overall Match Rate</div>
               <div class="text-3xl font-bold text-blue-600" id="result-match-rate">0%</div>
             </div>
@@ -1033,7 +1032,7 @@
         </div>
 
         <!-- Detail Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 hidden">
           <h3 class="font-bold text-gray-900 mb-4">Option-level Result</h3>
           <table class="w-full text-sm">
             <thead class="bg-gray-50">
@@ -3276,17 +3275,9 @@
       tbody.innerHTML = displaySchemes.map(s => {
         const primaryRegion = (s.targetRegion || 'EMEA').split(',')[0];
         const actions = [];
-        if (currentRole === 'spt') {
-          actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">Edit</button>`);
-          if (s.status === 'Completed') {
-            actions.push(`<button onclick="viewResultScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View Result</button>`);
-          }
-        } else {
-          if (['Ready for CPT', 'In Execution'].includes(s.status)) {
-            actions.push(`<button onclick="viewExecutionScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Execute</button>`);
-          } else if (s.status === 'Completed') {
-            actions.push(`<button onclick="viewExecutionScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View</button>`);
-          }
+        actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">Edit</button>`);
+        if (s.status === 'Completed') {
+          actions.push(`<button onclick="viewResultScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View Result</button>`);
         }
 
         return `
@@ -3295,7 +3286,6 @@
             <td class="px-4 py-3 font-medium text-gray-900">${s.name || '(Untitled)'}</td>
             <td class="px-4 py-3 text-gray-600">${primaryRegion}</td>
             <td class="px-4 py-3 text-right font-medium text-gray-900">${(s.gap || 0).toLocaleString()}</td>
-            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(s.status)}">${s.status}</span></td>
             <td class="px-4 py-3 text-xs text-gray-500">${s.createdAt}</td>
             <td class="px-4 py-3">${actions.join('')}</td>
           </tr>
