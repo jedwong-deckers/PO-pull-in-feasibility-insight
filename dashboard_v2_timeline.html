@@ -2440,6 +2440,11 @@
             document.getElementById('target-region').value = regions[0];
             document.getElementById('target-region-display').textContent = regions[0];
           }
+
+          // Auto-run the scenario so the loaded data is immediately reflected
+          if (entryMode === 'po' || document.getElementById('request-xf-date').value) {
+            loadScenario();
+          }
         } catch (err) {
           status.textContent = 'Failed: ' + (err.message || 'unknown error');
           console.error(err);
@@ -2488,6 +2493,18 @@
           if (poSet.size > 0 && !poSet.has(String(r.po_number))) return false;
           return true;
         });
+
+        // Fallback: if PO list was specified but matched nothing, ignore PO filter and show all rows in date range
+        if (filtered.length === 0 && poSet.size > 0) {
+          const dateOnly = realData.filter(r => {
+            if (r.conf_xf_date && (r.conf_xf_date < xfFrom || r.conf_xf_date > xfTo)) return false;
+            return true;
+          });
+          if (dateOnly.length > 0) {
+            filtered = dateOnly;
+            truncatedNote = `PO list did not match any loaded data; showing ${filtered.length.toLocaleString()} rows within the date range.`;
+          }
+        }
 
         if (filtered.length > 500) {
           filtered.sort((a, b) => (b.shortage || 0) - (a.shortage || 0));
@@ -2556,6 +2573,17 @@
         add('same-region', r.same_region);
         add('cross-region', r.cross_region);
       });
+
+      // Fallback: if loaded data has no source quantities, generate synthetic sources from shortages
+      // so that the Options section still shows feasible allocation candidates.
+      if (inventorySources.length === 0 && targetItems.length > 0) {
+        generateInventorySources();
+        if (truncatedNote) {
+          truncatedNote += ' Inventory sources were generated from shortage because no C-order/Preload/Same/Cross quantities were provided.';
+        } else {
+          truncatedNote = 'Inventory sources were generated from shortage because no C-order/Preload/Same/Cross quantities were provided.';
+        }
+      }
 
       renderPOTable(truncatedNote);
       updateTargetCountsFromItems();
