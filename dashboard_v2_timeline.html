@@ -1,0 +1,3782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PO Pull-in Feasibility Insight</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .option-card { transition: all 0.3s ease; }
+    .option-card:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+    .option-card.selected { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .btn-action { transition: all 0.2s ease; }
+    .btn-action:active { transform: scale(0.96); }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-slide-in { animation: slideIn 0.4s ease forwards; }
+    .progress-bar { transition: width 0.8s ease; }
+    .number-change { transition: all 0.4s ease; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+    .scenario-row { transition: all 0.3s ease; }
+    .scenario-row:hover { background-color: #F9FAFB; }
+    .tab-panel { animation: slideIn 0.3s ease forwards; }
+    .role-btn, .tab-btn { transition: all 0.2s ease; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-gray-900">PO Pull-in Feasibility Insight</h1>
+          <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">v2.4 Gap-Based Decision</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">JW</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <nav class="bg-white border-b border-gray-200 sticky top-[73px] z-40">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex space-x-6" id="tab-nav">
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Schemes</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="detail" onclick="switchTab('detail')">Scheme Detail</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="execution" onclick="switchTab('execution')">Execution</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="result" onclick="switchTab('result')">Result</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Elevator Navigation -->
+  <nav id="elevator-nav" class="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-end gap-2">
+    <button onclick="scrollToSection('demand-input-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Demand Input</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+    <button onclick="scrollToSection('gap-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Gap Overview</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+    <button onclick="scrollToSection('po-status-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">PO List</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+    <button onclick="scrollToSection('options-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Options</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+    <button onclick="scrollToSection('allocation-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Allocation Matrix</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+    <button onclick="scrollToSection('summary-section')" class="group flex items-center gap-2 text-right">
+      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Scenario Summary</span>
+      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+    </button>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- ===== TAB: Schemes ===== -->
+    <div id="tab-schemes" class="tab-panel">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Schemes</h2>
+          <p class="text-sm text-gray-500 mt-1">View and manage pull-forward scenarios</p>
+        </div>
+        <button onclick="createNewScheme()" class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Scheme
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <span class="text-sm text-gray-600">Filter by status:</span>
+        <select id="scheme-status-filter" onchange="renderSchemeList()" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          <option value="all">All</option>
+          <option value="Draft">Draft</option>
+          <option value="Pending Coordination">Pending Coordination</option>
+          <option value="Ready for CPT">Ready for CPT</option>
+          <option value="In Execution">In Execution</option>
+          <option value="Completed">Completed</option>
+          <option value="Closed">Closed</option>
+        </select>
+      </div>
+
+      <!-- Scheme Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">ID</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Name</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Region</th>
+              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500">Gap</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Status</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Created</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="scheme-list-body">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+        <div id="scheme-list-empty" class="hidden py-12 text-center text-gray-400 text-sm">No schemes yet. Click "New Scheme" to create one.</div>
+      </div>
+    </div>
+
+<!-- ===== TAB: Scheme Detail ===== -->
+    <div id="tab-detail" class="tab-panel hidden">
+
+      <!-- Scheme Info Header (hidden by request) -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <label class="text-sm font-medium text-gray-700">Scheme Name</label>
+              <span class="text-xs text-gray-400" id="scheme-id-display">-</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" id="scheme-status-display">Draft</span>
+            </div>
+            <input type="text" id="scheme-name-input" placeholder="e.g. EMEA July Pull-forward" class="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          </div>
+          <div id="scheme-action-buttons" class="flex items-center flex-wrap">
+            <button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Notes / Coordination Summary</label>
+          <textarea id="scheme-notes-input" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Record coordination notes, factory contacts, or any special instructions..."></textarea>
+        </div>
+      </div>
+
+    <!-- ===== STEP 1: Demand Input ===== -->
+    <div id="demand-input-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+        <h2 class="font-bold text-gray-900">Demand Input — Pull-in Request</h2>
+      </div>
+
+      <!-- Entry Mode Switcher -->
+      <div class="mb-5">
+        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          Entry Mode
+          <span class="relative inline-block group">
+            <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="hidden group-hover:block absolute z-30 left-0 top-6 w-[720px] max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl p-4">
+              <div class="text-xs font-semibold text-gray-700 mb-2">Use case: which entry mode fits your request?</div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-[11px] border-collapse min-w-[640px]">
+                  <thead>
+                    <tr class="bg-gray-50 text-left text-gray-600">
+                      <th class="px-2 py-1.5 border border-gray-200 font-medium">Sales trigger</th>
+                      <th class="px-2 py-1.5 border border-gray-200 font-medium">Scenario description</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.1 PO List</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.2 Style-Color</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.3 Quantity Only</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-gray-700">
+                    <tr>
+                      <td class="px-2 py-1.5 border border-gray-200 font-medium">1. Shipping / logistics constraints</td>
+                      <td class="px-2 py-1.5 border border-gray-200">Shipping deadline, fixed sailing schedule, tight space, freight rate increase, etc. Need to pull in shipment to catch vessel / sailing.</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                    </tr>
+                    <tr>
+                      <td class="px-2 py-1.5 border border-gray-200 font-medium">2. Demand surge / replenishment</td>
+                      <td class="px-2 py-1.5 border border-gray-200">Hot item replenishment, promo prep, new season launch fill, etc. Demand-driven pull.</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                    </tr>
+                    <tr>
+                      <td class="px-2 py-1.5 border border-gray-200 font-medium">3. Cross-region urgent reallocation</td>
+                      <td class="px-2 py-1.5 border border-gray-200">Global Supply Planning needs to urgently move goods from another region / factory to cover a regional stock-out, beyond normal order allocation.</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                    </tr>
+                    <tr>
+                      <td class="px-2 py-1.5 border border-gray-200 font-medium">4. Key account / VIP delivery request</td>
+                      <td class="px-2 py-1.5 border border-gray-200">Key customer requests earlier delivery; prioritize fulfillment.</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-green-600 font-bold">✓</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                      <td class="px-2 py-1.5 border border-gray-200 text-center text-gray-300">✗</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </span>
+        </label>
+        <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-full md:w-fit">
+          <button id="entry-po" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchEntryMode('po')">1.1 PO List</button>
+          <button id="entry-style" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('style')">1.2 Style-Color</button>
+          <button id="entry-qty" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('qty')">1.3 Quantity Only</button>
+        </div>
+        <p class="text-xs text-gray-500 mt-2" id="entry-mode-desc">Confirmed order range; pull orders by PO#</p>
+
+        <!-- Real data toggle -->
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-blue-800">Real data mode</span>
+            <span class="text-xs text-blue-600" id="real-data-status">Using demo data</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="file" id="real-data-file" accept=".json,.xlsx" class="hidden" onchange="handleRealDataFile(event)">
+            <button id="load-real-data-btn" onclick="document.getElementById('real-data-file').click()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">Load Real Data</button>
+            <button id="clear-real-data-btn" onclick="clearRealData()" disabled class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 disabled:opacity-50">Back to Demo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Common fields -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4" id="common-fields-grid">
+        <div class="flex flex-col justify-between">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Target Region
+            <span id="target-region-required" class="text-red-500 font-normal">Required</span>
+          </label>
+          <div class="relative">
+            <button type="button" id="target-region-btn" onclick="toggleRegionDropdown()" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-left bg-white focus:ring-2 focus:ring-blue-500 outline-none flex items-center justify-between">
+              <span id="target-region-display">EMEA</span>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="target-region-dropdown" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="region-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="EMEA" checked onchange="updateSelectedRegions()">
+                <span class="ml-2 text-sm text-gray-700">EMEA</span>
+              </label>
+              <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="region-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="APAC" onchange="updateSelectedRegions()">
+                <span class="ml-2 text-sm text-gray-700">APAC</span>
+              </label>
+              <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="region-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="US" onchange="updateSelectedRegions()">
+                <span class="ml-2 text-sm text-gray-700">US</span>
+              </label>
+              <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="region-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="Canada" onchange="updateSelectedRegions()">
+                <span class="ml-2 text-sm text-gray-700">Canada</span>
+              </label>
+              <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" class="region-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" value="LATAM" onchange="updateSelectedRegions()">
+                <span class="ml-2 text-sm text-gray-700">LATAM</span>
+              </label>
+            </div>
+          </div>
+          <input type="hidden" id="target-region" value="EMEA">
+        </div>
+        <div id="xf-from-wrapper" class="flex flex-col justify-between">
+          <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (From)</label>
+          <input type="date" id="xf-from" value="2026-08-01" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        </div>
+        <div id="xf-to-wrapper" class="flex flex-col justify-between">
+          <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (To)</label>
+          <input type="date" id="xf-to" value="2026-10-31" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        </div>
+        <div id="request-xf-wrapper" class="flex flex-col justify-between">
+          <label class="block text-sm font-medium text-gray-700 mb-2" id="target-xf-date-label">Target XF Date <span class="text-gray-400 font-normal" id="target-xf-date-marker">Optional</span></label>
+          <input type="date" id="request-xf-date" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        </div>
+        <div class="flex items-end">
+          <button onclick="loadScenario()" class="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Mode 1.1: PO List -->
+      <div id="po-fields" class="mode-fields mt-4 pt-4 border-t border-gray-100">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Pull-in PO# List <span class="text-gray-400 font-normal">Optional</span></label>
+        <textarea id="po-list-input" rows="2" class="w-full md:w-2/3 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="PO#2025EM12345, PO#2025EM12346..." oninput="updateTargetMetrics()">PO#2026EM12345, PO#2026EM12346, PO#2026EM12347</textarea>
+      </div>
+
+      <!-- Mode 1.2: Style-Color -->
+      <div id="style-fields" class="mode-fields hidden mt-4 pt-4 border-t border-gray-100">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Target Style-Color <span class="text-red-500 font-normal">Required</span></label>
+            <input type="text" id="style-input" value="W Classic Mini II / Chestnut" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" oninput="updateTargetMetrics()">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Expected Qty <span class="text-gray-400 font-normal">Optional</span></label>
+            <input type="number" id="style-qty-input" value="" min="0" step="100" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 8000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode 1.3: Quantity Only -->
+      <div id="qty-fields" class="mode-fields hidden mt-4 pt-4 border-t border-gray-100">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Expected Qty <span class="text-red-500 font-normal">Required</span></label>
+            <input type="number" id="qty-input" value="7992" min="0" step="100" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 8000">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Style-Color <span class="text-gray-400 font-normal">Optional</span></label>
+            <input type="text" id="qty-style-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. W Classic Mini II / Chestnut" oninput="updateTargetMetrics()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Candidate PO Selection ===== -->
+    <div id="candidate-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="font-bold text-gray-900">Candidate POs</h2>
+          <p class="text-sm text-gray-500">Review and select the POs you want to pull in</p>
+        </div>
+        <div class="text-sm font-medium text-blue-700" id="candidate-summary">0 POs selected · 0 pairs</div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <input type="checkbox" id="candidate-select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleAllCandidates(this.checked)">
+              </th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Project Type</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Style</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Conf XF date</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO qty</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">FG inventory</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Shortage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="candidate-body">
+            <!-- JS populated -->
+          </tbody>
+          <tfoot class="bg-gray-50 font-medium text-gray-900">
+            <tr>
+              <td class="px-3 py-2 text-xs" colspan="8">Total selected</td>
+              <td class="px-3 py-2 text-xs text-right" id="candidate-total-demand"></td>
+              <td class="px-3 py-2 text-xs text-right" id="candidate-total-fg"></td>
+              <td class="px-3 py-2 text-xs text-right" id="candidate-total-gap"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <span class="text-xs text-gray-500">Only selected POs will enter Total Demand / Gap analysis.</span>
+        <button onclick="confirmCandidateSelection()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 btn-action">Analyze Selected POs</button>
+      </div>
+    </div>
+
+    <!-- ===== STEP 2: Gap Overview ===== -->
+    <div id="gap-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-slide-in hidden">
+      <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+        <div class="text-xs text-gray-500 mb-1">Selected Target POs / Style-Colors</div>
+        <div class="text-2xl font-bold text-gray-900"><span id="target-po-count">1</span> / <span id="target-style-count">1</span></div>
+        <div class="text-xs text-gray-400 mt-1">POs / Styles</div>
+      </div>
+      <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+        <div class="text-xs text-gray-500 mb-1">Total Demand</div>
+        <div class="text-2xl font-bold text-gray-900" id="total-demand-display">7,992 <span class="text-sm font-normal text-gray-500">pairs</span></div>
+        <div class="text-xs text-gray-400 mt-1">Selected order quantity</div>
+      </div>
+      <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+        <div class="text-xs text-gray-500 mb-1">Own PO FG — Direct Ship</div>
+        <div class="text-2xl font-bold text-green-600" id="own-po-fg-display">1,200 <span class="text-sm font-normal text-gray-500">pairs</span></div>
+        <div class="text-xs text-green-600 mt-1">No action needed</div>
+      </div>
+      <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+        <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+        <div class="text-2xl font-bold text-red-600" id="gap-to-fill-display">6,792 <span class="text-sm font-normal text-gray-500">pairs</span></div>
+        <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div id="gap-bar" class="bg-red-500 h-2 rounded-full progress-bar" style="width: 100%"></div>
+        </div>
+        <div class="flex items-center justify-between mt-2">
+          <span class="text-xs text-gray-400" id="support-status-label">Select options below</span>
+          <span class="text-xs font-medium" id="support-status">0 supported</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PO List ===== -->
+    <div id="po-status-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <h2 class="font-bold text-gray-900">PO List</h2>
+          <span class="text-sm text-gray-500 ml-2">PO qty, FG inventory and shortage by PO / Style-Color-Size</span>
+        </div>
+        <button id="po-list-toggle-btn" onclick="togglePOList()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-1">
+          <span>Expand</span>
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+      </div>
+      <div id="po-list-table-wrapper" class="hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Project Type</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Style</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Conf XF date</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO qty</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">FG inventory</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Shortage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="po-status-body">
+            <!-- JS populated -->
+          </tbody>
+          <tfoot class="bg-gray-50 font-medium text-gray-900">
+            <tr>
+              <td class="px-3 py-2 text-xs" colspan="6">Total</td>
+              <td class="px-3 py-2 text-xs text-right" id="po-status-total-demand"></td>
+              <td class="px-3 py-2 text-xs text-right" id="po-status-total-fg"></td>
+              <td class="px-3 py-2 text-xs text-right" id="po-status-total-gap"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+    <!-- ===== STEP 2.5: Decision Mode ===== -->
+    <div id="decision-mode-panel" class="mb-6 animate-slide-in hidden">
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+            <h2 class="font-bold text-gray-900">Decision Timing</h2>
+          </div>
+          <div class="flex items-center bg-gray-100 rounded-lg p-1">
+            <button id="mode-immediate" class="px-4 py-1.5 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchDecisionMode('immediate')">立即决策</button>
+            <button id="mode-deferred" class="px-4 py-1.5 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchDecisionMode('deferred')">延迟决策</button>
+          </div>
+        </div>
+
+        <!-- Deferred panel -->
+        <div id="deferred-panel" class="hidden">
+          <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="text-sm text-gray-600 mr-2">Evaluate after:</span>
+            <button class="deferred-time-btn px-3 py-1.5 text-xs rounded-full border-2 border-purple-500 bg-purple-50 text-purple-700 font-medium" data-days="3" onclick="selectDeferredDays(3)">+3 days</button>
+            <button class="deferred-time-btn px-3 py-1.5 text-xs rounded-full border-2 border-gray-200 bg-white text-gray-600 hover:border-purple-300" data-days="7" onclick="selectDeferredDays(7)">+1 week</button>
+            <button class="deferred-time-btn px-3 py-1.5 text-xs rounded-full border-2 border-gray-200 bg-white text-gray-600 hover:border-purple-300" data-days="14" onclick="selectDeferredDays(14)">+2 weeks</button>
+            <div class="flex items-center gap-1 ml-2">
+              <input type="number" id="custom-days" min="1" max="28" value="" class="w-14 px-2 py-1 text-xs border border-gray-300 rounded-md text-center" onchange="selectDeferredDaysCustom()">
+              <span class="text-xs text-gray-400">days</span>
+            </div>
+          </div>
+
+          <!-- MPS projection cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-500 mb-1">原PO FG (当前)</div>
+              <div class="text-xl font-bold text-gray-900" id="current-own-fg-display">1,200</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center border border-purple-100">
+              <div class="text-xs text-purple-600 mb-1">原PO FG (预计)</div>
+              <div class="text-xl font-bold text-purple-900" id="projected-own-fg-display">1,200</div>
+              <div class="text-xs text-purple-600" id="projected-opt1-delta">+0</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-3 text-center border border-purple-100">
+              <div class="text-xs text-purple-600 mb-1">预计剩余 Gap</div>
+              <div class="text-xl font-bold text-purple-900" id="projected-gap-display">6,792</div>
+              <div class="text-xs text-purple-600" id="projected-gap-delta">−0</div>
+            </div>
+          </div>
+
+          <!-- Benefits & Risks -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div class="bg-green-50 rounded-lg p-3 border border-green-100">
+              <div class="text-xs font-semibold text-green-700 mb-1">💰 等待收益</div>
+              <div class="text-sm text-green-800" id="deferred-benefit-text">选择延迟时间查看可减少的跨区调货量</div>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-3 border border-amber-100">
+              <div class="text-xs font-semibold text-amber-700 mb-1">⚠️ 风险提示</div>
+              <div class="text-sm text-amber-800" id="deferred-risk-text">延迟决策将推迟发货节奏，需确认客户可接受新 ETA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 3: Option Selector ===== -->
+    <div id="options-section" class="mb-6 animate-slide-in hidden">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+        <h2 class="font-bold text-gray-900">Select Options to Fill the Gap</h2>
+        <span class="text-sm text-gray-500 ml-2">Check one or more options to preview allocation</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- Option 1: C-order FG -->
+        <div id="opt1-card" class="option-card bg-white rounded-xl border-2 border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="opt1-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt1')">
+              <div>
+                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded">OPTION 1</span>
+                <h3 class="font-bold text-gray-900 mt-0.5">C-order FG</h3>
+              </div>
+            </div>
+            <div class="relative group">
+              <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="hidden group-hover:block absolute right-0 top-6 w-56 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
+                代表实物库存，尚未到达冲销时间点并正式冲销给 PO。
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Available</span>
+              <span class="text-base font-bold text-gray-900" id="opt1-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="text-gray-500">Allocated</span>
+              <span class="font-bold text-blue-700" id="opt1-allocated-display">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 2: Preload FG -->
+        <div id="opt2-card" class="option-card bg-white rounded-xl border-2 border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="opt2-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt2')">
+              <div>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">OPTION 2</span>
+                <h3 class="font-bold text-gray-900 mt-0.5">Preload FG</h3>
+              </div>
+            </div>
+            <div class="relative group">
+              <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="hidden group-hover:block absolute right-0 top-6 w-56 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
+                代表实物库存，尚未到达冲销时间点并正式冲销给 PO。
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Available</span>
+              <span class="text-base font-bold text-gray-900" id="opt2-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="text-gray-500">Allocated</span>
+              <span class="font-bold text-green-700" id="opt2-allocated-display">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 3: Same Region PO FG Re-route -->
+        <div id="opt3-card" class="option-card bg-white rounded-xl border-2 border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="opt3-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt3')">
+              <div>
+                <span class="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs font-bold rounded">OPTION 3</span>
+                <h3 class="font-bold text-gray-900 mt-0.5">Same Region PO FG Re-route</h3>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="inline-flex items-center bg-gray-100 rounded-lg p-0.5">
+                <button id="opt3-strategy-btn1" type="button" onclick="setOptionStrategy('opt3','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略1</button>
+                <button id="opt3-strategy-btn2" type="button" onclick="setOptionStrategy('opt3','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略2</button>
+              </div>
+              <div class="relative group">
+                <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
+                  <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
+                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响，已按 Project Type 计算 Updated ETA。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Available in <strong id="opt3-target-region" class="text-teal-700">EMEA</strong></span>
+              <span class="text-base font-bold text-gray-900" id="opt3-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="text-gray-500">Allocated</span>
+              <span class="font-bold text-teal-700" id="opt3-allocated-display">0</span>
+            </div>
+          </div>
+          <div id="opt3-strategy-note" class="text-xs text-teal-700 mt-2"></div>
+          <div id="opt3-source-list" class="mt-3 hidden">
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+              <div class="text-xs text-gray-600">
+                <span id="opt3-source-count" class="font-medium text-gray-900">0</span> source PO(s),
+                total <span id="opt3-source-qty" class="font-medium text-gray-900">0</span> pairs available
+              </div>
+              <button type="button" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                View full PO list
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 4: Cross-Region PO FG Re-route -->
+        <div id="opt4-card" class="option-card bg-white rounded-xl border-2 border-gray-200 p-4">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="opt4-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt4')">
+              <div>
+                <span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded">OPTION 4</span>
+                <h3 class="font-bold text-gray-900 mt-0.5">Cross-Region PO FG Re-route</h3>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="inline-flex items-center bg-gray-100 rounded-lg p-0.5">
+                <button id="opt4-strategy-btn1" type="button" onclick="setOptionStrategy('opt4','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略1</button>
+                <button id="opt4-strategy-btn2" type="button" onclick="setOptionStrategy('opt4','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略2</button>
+              </div>
+              <div class="relative group">
+                <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
+                  <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
+                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响，已按 Project Type 计算 Updated ETA。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Available outside <strong id="opt4-target-region" class="text-orange-700">EMEA</strong></span>
+              <span class="text-base font-bold text-gray-900" id="opt4-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1">
+              <span class="text-gray-500">Allocated</span>
+              <span class="font-bold text-orange-700" id="opt4-allocated-display">0</span>
+            </div>
+          </div>
+          <div id="opt4-strategy-note" class="text-xs text-orange-700 mt-2"></div>
+          <div id="opt4-source-list" class="mt-3 hidden">
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+              <div class="text-xs text-gray-600">
+                <span id="opt4-source-count" class="font-medium text-gray-900">0</span> source PO(s),
+                total <span id="opt4-source-qty" class="font-medium text-gray-900">0</span> pairs available
+              </div>
+              <button type="button" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                View full PO list
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+        <span class="flex items-center gap-1">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          勾选后自动按缺口分配
+        </span>
+      </div>
+    </div>
+
+    <!-- ===== Allocation Matrix ===== -->
+    <div id="allocation-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2">
+          <h2 class="font-bold text-gray-900">Allocation Matrix</h2>
+          <span class="text-sm text-gray-500 ml-2">Read-only feasibility preview by PO / Style-Color-Size and source</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="allocation-matrix-toggle-btn" onclick="toggleAllocationMatrix()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-1">
+            <span>Expand</span>
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="allocation-matrix-table-wrapper" class="hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Style</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Shortage</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">C-order</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Preload</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Same Region</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Cross Region</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Covered</th>
+              <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100" id="allocation-matrix-body">
+            <!-- JS populated -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3 text-xs text-gray-500">
+        💡 Numbers show how much of each source can cover the shortage based on current availability. Style-Color-Size is matched automatically.
+      </div>
+    </div>
+  </div>
+
+    <!-- ===== STEP 4: Scenario Comparison & Impact Summary ===== -->
+    <div id="summary-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+        <h2 class="font-bold text-gray-900">Scenario Summary & Impact Analysis</h2>
+      </div>
+
+      <!-- Support vs Gap -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+          <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+          <div class="text-2xl font-bold text-red-600" id="summary-gap">6,792</div>
+          <div class="text-xs text-gray-400">pairs</div>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+          <div class="text-xs text-gray-500 mb-1">Total Support</div>
+          <div class="text-2xl font-bold text-blue-600" id="total-support">0</div>
+          <div class="text-xs text-gray-400">pairs</div>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+          <div class="text-xs text-gray-500 mb-1">Remaining Gap</div>
+          <div class="text-2xl font-bold" id="remaining-gap">6,792</div>
+          <div class="text-xs text-gray-400">pairs</div>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+          <div class="text-xs text-gray-500 mb-1">Expected Fulfillment Rate</div>
+          <div class="text-2xl font-bold text-purple-600" id="fulfillment-rate">0%</div>
+          <div class="text-xs text-gray-400">Total Support / Gap to Fill</div>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-4 text-center hidden">
+          <div class="text-xs text-gray-500 mb-1">Est. Repack Cost</div>
+          <div class="text-2xl font-bold text-orange-600" id="total-cost">$0</div>
+          <div class="text-xs text-gray-400" id="total-cost-label">No repack cost</div>
+        </div>
+      </div>
+
+      <!-- Selected Options Breakdown -->
+      <div class="mb-6">
+        <div class="text-sm font-medium text-gray-700 mb-3">Selected Options Breakdown</div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Source</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Lead Time</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">ETA</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Key Impact</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="breakdown-body">
+              <tr id="breakdown-empty">
+                <td colspan="6" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Strategy Impact -->
+      <div id="strategy-impact-section" class="mb-6 hidden">
+        <div class="text-sm font-medium text-gray-700 mb-3">Strategy Impact</div>
+        <div id="strategy-impact-body" class="space-y-3">
+          <!-- JS populated -->
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between">
+        <button onclick="resetScenario()" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Reset Options
+        </button>
+        <button onclick="openConfirmModal()" id="confirm-btn" disabled class="px-6 py-3 bg-white border border-blue-600 text-blue-600 font-bold rounded-lg btn-action flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Review Action List
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Confirmation Modal ===== -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+      <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col pointer-events-auto">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div>
+              <h3 class="font-bold text-gray-900">Action List — Feasibility Preview</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Review scenario recap and allocation plan</p>
+            </div>
+            <button onclick="closeConfirmModal()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="p-6 overflow-auto flex-1">
+            <!-- Scenario Recap -->
+            <div class="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+              <div class="text-sm font-bold text-blue-800 mb-2">Scenario Recap</div>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-gray-500">Gap to Fill:</span> <span class="font-bold" id="modal-gap">6,792 pairs</span></div>
+                <div><span class="text-gray-500">Total Support:</span> <span class="font-bold text-blue-700" id="modal-total-support">0 pairs</span></div>
+              </div>
+            </div>
+
+            <!-- Allocation Plan -->
+            <div class="mb-6">
+              <div class="text-sm font-bold text-gray-900 mb-3">Allocation Plan</div>
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">#</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Target PO</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Style</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Color</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Size</th>
+                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Source</th>
+                    <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="action-table-body">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <button onclick="closeConfirmModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Close</button>
+            <button onclick="copyActionList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              Copy Action List
+            </button>
+            <button onclick="exportActionList()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    </div>
+
+    <!-- ===== TAB: Execution ===== -->
+    <div id="tab-execution" class="tab-panel hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">CPT Execution</h2>
+          <p class="text-sm text-gray-500 mt-1">Enter factory feedback and actual quantities</p>
+        </div>
+        <div id="execution-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No scheme selected</div>
+      </div>
+
+      <div id="execution-empty" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-gray-400 mb-2">No scheme ready for execution.</div>
+        <div class="text-sm text-gray-500">Please select a scheme with status "Ready for CPT" or "In Execution" from the Schemes tab.</div>
+      </div>
+
+      <div id="execution-content" class="hidden">
+        <!-- Scheme Summary -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-gray-900" id="execution-scheme-name">Scheme Name</h3>
+              <p class="text-sm text-gray-500" id="execution-scheme-meta">ID · Region · Created</p>
+            </div>
+            <button onclick="exportFactoryList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export Factory List
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+              <div class="text-2xl font-bold text-red-600" id="execution-gap">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Planned Support</div>
+              <div class="text-2xl font-bold text-blue-600" id="execution-planned">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Status</div>
+              <div class="text-lg font-bold text-gray-900" id="execution-status">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actual Qty Inputs -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 class="font-bold text-gray-900 mb-4">Factory Feedback</h3>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Planned Qty</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Actual Qty</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Match Rate</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Factory Feedback</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="execution-table-body">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Overall Feedback Notes</label>
+            <textarea id="execution-feedback" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Enter summary feedback from factories..."></textarea>
+          </div>
+        </div>
+
+        <!-- PO Pull-in Confirmation -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 class="font-bold text-gray-900 mb-4">PO Pull-in Confirmation</h3>
+          <p class="text-sm text-gray-500 mb-4">Enter the confirmed XF date from factory for each PO. Pull-in days = Original XF − Confirmed XF.</p>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">PO#</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Region</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Original XF</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Confirmed XF</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Pull-in Days</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="execution-po-pullin-body">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+          <div class="flex justify-end mt-4">
+            <button onclick="saveExecutionResult()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Save Execution Result
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB: Result ===== -->
+    <div id="tab-result" class="tab-panel hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Execution Result</h2>
+          <p class="text-sm text-gray-500 mt-1">Review factory execution and close the loop with demand region</p>
+        </div>
+        <div id="result-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No scheme selected</div>
+      </div>
+
+      <div id="result-empty" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="text-gray-400 mb-2">No completed scheme to view.</div>
+        <div class="text-sm text-gray-500">Please select a scheme with status "Completed" from the Schemes tab.</div>
+      </div>
+
+      <div id="result-content" class="hidden">
+        <!-- Summary -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-gray-900" id="result-scheme-name">Scheme Name</h3>
+              <p class="text-sm text-gray-500" id="result-scheme-meta">ID · Region · Created</p>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-gray-500">Overall Match Rate</div>
+              <div class="text-3xl font-bold text-blue-600" id="result-match-rate">0%</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+              <div class="text-xl font-bold text-red-600" id="result-gap">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Planned Total</div>
+              <div class="text-xl font-bold text-blue-600" id="result-planned">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Actual Total</div>
+              <div class="text-xl font-bold text-green-600" id="result-actual">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Remaining Gap</div>
+              <div class="text-xl font-bold text-orange-600" id="result-remaining">0</div>
+              <div class="text-xs text-gray-400">pairs</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h3 class="font-bold text-gray-900 mb-4">Option-level Result</h3>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Planned</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Actual</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Match Rate</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Feedback</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="result-table-body">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pull-in Summary -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-gray-900">PO Pull-in Result</h3>
+              <p class="text-sm text-gray-500 mt-1">Compare original XF date vs. factory confirmed XF date</p>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-gray-500">Avg Pull-in Days</div>
+              <div class="text-3xl font-bold text-purple-600" id="result-avg-pullin">0</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">POs to Pull-in</div>
+              <div class="text-xl font-bold text-gray-900" id="result-po-count">0</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Confirmed POs</div>
+              <div class="text-xl font-bold text-green-600" id="result-confirmed-po-count">0</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Total Pull-in Days</div>
+              <div class="text-xl font-bold text-purple-600" id="result-total-pullin">0</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center">
+              <div class="text-xs text-gray-500 mb-1">Execution Success</div>
+              <div class="text-xl font-bold text-gray-900" id="result-pullin-success">-</div>
+            </div>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">PO#</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Region</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Original XF</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Confirmed XF</th>
+                <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Pull-in Days</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100" id="result-po-pullin-body">
+              <!-- JS populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Close Loop -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 class="font-bold text-gray-900 mb-4">Close Loop with Demand Region</h3>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Feedback to Region</label>
+            <textarea id="result-feedback-to-region" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 实际可执行 6,000 pairs，剩余 800 pairs 缺口转入下一周期处理..."></textarea>
+          </div>
+          <div class="flex justify-end" id="result-close-section">
+            <button onclick="closeScheme()" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Close Scheme
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Footer -->
+    <div class="mt-8 text-center text-xs text-gray-400 pb-8">
+      Pull Forward Scenario Simulator v2.4 — Gap-Based Decision
+    </div>
+
+  
+  </main>
+
+  <script>
+    // ===== State =====
+    const TOTAL_DEMAND = 7992;
+    const OWN_PO_FG_NOW = 1200;
+    let selectedOpt3 = [];
+    let selectedOpt4 = [];
+
+    // PO-level allocation state
+    let targetItems = [];          // demand items at PO/Style/Color/Size level
+    let inventorySources = [];     // available inventory sources at same level
+    let allocations = [];          // current allocation plan
+
+    // Real data state
+    let realData = null;           // raw rows from table1.json
+    let useRealData = false;       // when true, Search uses real data instead of demo generation
+
+    // Candidate selection state (for style-color / quantity entry modes)
+    let candidateItems = [];
+    let selectedCandidateIds = new Set();
+
+    // Option strategy state (for Option 3/4)
+    let opt3Strategy = 'strategy1';
+    let opt4Strategy = 'strategy1';
+    const LEADTIME_MAP = { CO: 77, CU: 77, MU: 91, NU: 105, NUL: 105, NUB: 105, NUBL: 105 };
+
+    function getGap() {
+      if (useRealData && targetItems.length > 0) {
+        return targetItems.reduce((sum, t) => sum + t.shortage, 0);
+      }
+      if (decisionMode === 'deferred' && deferredDays > 0) {
+        return Math.max(0, TOTAL_DEMAND - getProjectedFG(deferredDays));
+      }
+      return TOTAL_DEMAND - OWN_PO_FG_NOW;
+    }
+
+    // ===== Scheme Management State =====
+    let schemes = [];
+    let currentSchemeId = null;
+    let currentRole = 'spt';
+    let activeTab = 'schemes';
+
+    function generateSchemeId() {
+      return 'SCH-' + String(Date.now()).slice(-6);
+    }
+
+    function getCurrentScheme() {
+      return schemes.find(s => s.id === currentSchemeId);
+    }
+
+    function getStatusBadgeClass(status) {
+      const map = {
+        'Draft': 'bg-gray-100 text-gray-700',
+        'Pending Coordination': 'bg-yellow-100 text-yellow-700',
+        'Ready for CPT': 'bg-blue-100 text-blue-700',
+        'In Execution': 'bg-purple-100 text-purple-700',
+        'Completed': 'bg-green-100 text-green-700',
+        'Closed': 'bg-gray-100 text-gray-500'
+      };
+      return map[status] || 'bg-gray-100 text-gray-700';
+    }
+
+    // ===== Entry Mode =====
+    let entryMode = 'po'; // 'po' | 'style' | 'qty'
+
+    function switchEntryMode(mode) {
+      entryMode = mode;
+
+      // Buttons
+      const modes = ['po', 'style', 'qty'];
+      const desc = {
+        po: 'Confirmed order range; pull orders by PO#',
+        style: 'Confirmed priority style; find pull-in orders by Style-Color',
+        qty: 'Only specify shipment quantity; system recommends styles/orders that can ship early'
+      };
+
+      modes.forEach(m => {
+        const btn = document.getElementById('entry-' + m);
+        if (m === mode) {
+          btn.className = 'entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all';
+        } else {
+          btn.className = 'entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all';
+        }
+      });
+
+      document.getElementById('entry-mode-desc').textContent = desc[mode];
+
+      // Fields
+      document.getElementById('po-fields').classList.toggle('hidden', mode !== 'po');
+      document.getElementById('style-fields').classList.toggle('hidden', mode !== 'style');
+      document.getElementById('qty-fields').classList.toggle('hidden', mode !== 'qty');
+
+      // XF date range only for PO List mode (1.1); request XF date is always visible
+      const isPO = mode === 'po';
+      document.getElementById('xf-from-wrapper').classList.toggle('hidden', !isPO);
+      document.getElementById('xf-to-wrapper').classList.toggle('hidden', !isPO);
+      document.getElementById('common-fields-grid').className = isPO
+        ? 'grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4'
+        : 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-4';
+
+      // Target region required only for PO List mode
+      const reqLabel = document.getElementById('target-region-required');
+      if (isPO) {
+        reqLabel.textContent = 'Required';
+        reqLabel.className = 'text-red-500 font-normal';
+      } else {
+        reqLabel.textContent = 'Optional';
+        reqLabel.className = 'text-gray-400 font-normal';
+      }
+
+      // Target XF Date is required for style/qty candidate search, optional for PO list
+      const xfMarker = document.getElementById('target-xf-date-marker');
+      if (xfMarker) {
+        xfMarker.textContent = isPO ? 'Optional' : 'Required';
+        xfMarker.className = isPO ? 'text-gray-400 font-normal' : 'text-red-500 font-normal';
+      }
+
+      // Hide candidate selection and analysis sections when switching to style/qty
+      const candidateSection = document.getElementById('candidate-section');
+      if (candidateSection) candidateSection.classList.add('hidden');
+      if (!isPO) {
+        ['gap-section', 'po-status-section', 'options-section', 'allocation-section', 'summary-section'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('hidden');
+        });
+      }
+
+      updateTargetMetrics();
+    }
+
+    function updateTargetMetrics() {
+      const mode = entryMode;
+      let poCount = 0;
+      let styleCount = 0;
+
+      // Estimation assumptions based on 7,992 pairs total:
+      // ~2,500 pairs per PO, ~3,000 pairs per style-color
+      const estPOsFromDemand = Math.max(1, Math.round(TOTAL_DEMAND / 2500));
+      const estStylesFromDemand = Math.max(1, Math.round(TOTAL_DEMAND / 3000));
+
+      if (mode === 'po') {
+        const poText = document.getElementById('po-list-input').value;
+        poCount = poText.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0).length;
+        // Demo samples assign one distinct style-color per PO up to 3 samples
+        styleCount = poCount > 0 ? Math.min(poCount, 3) : 0;
+      } else if (mode === 'style') {
+        const styleText = document.getElementById('style-input').value.trim();
+        styleCount = styleText ? styleText.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0).length : 0;
+        poCount = styleCount > 0 ? Math.max(1, Math.round(styleCount * 1.4)) : 0;
+      } else if (mode === 'qty') {
+        const styleText = document.getElementById('qty-style-input').value.trim();
+        styleCount = styleText ? styleText.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0).length : estStylesFromDemand;
+        poCount = estPOsFromDemand;
+      }
+
+      document.getElementById('target-po-count').textContent = poCount;
+      document.getElementById('target-style-count').textContent = styleCount;
+    }
+
+    function updateTargetCountsFromItems() {
+      const poSet = new Set(targetItems.map(t => t.po).filter(po => po && po !== 'TBD' && po !== 'Multiple'));
+      const styleSet = new Set(targetItems.map(t => t.style + ' / ' + t.color).filter(s => s && s !== '- / -'));
+      document.getElementById('target-po-count').textContent = poSet.size || '0';
+      document.getElementById('target-style-count').textContent = styleSet.size || '0';
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function toggleRegionDropdown() {
+      document.getElementById('target-region-dropdown').classList.toggle('hidden');
+    }
+
+    function updateSelectedRegions() {
+      const checkboxes = document.querySelectorAll('.region-checkbox:checked');
+      const values = Array.from(checkboxes).map(cb => cb.value);
+      const display = document.getElementById('target-region-display');
+      const hidden = document.getElementById('target-region');
+
+      hidden.value = values.join(',');
+      display.textContent = values.length > 0 ? values.join(', ') : 'Select regions...';
+    }
+
+    function getPrimaryRegion() {
+      const values = document.getElementById('target-region').value.split(',').filter(v => v);
+      return values.length > 0 ? values[0] : 'EMEA';
+    }
+
+    // ===== Decision Mode & MPS =====
+    let decisionMode = 'immediate'; // 'immediate' | 'deferred'
+    let deferredDays = 0;
+
+    // MPS: Projected FG from original PO over time (days from now)
+    // Current FG = 1,200; remaining WIP gradually converts to FG
+    const MPS_PROJECTION = {
+      0: 1200,
+      3: 1600,
+      7: 2500,
+      14: 4000,
+      21: 5500,
+      28: 6800
+    };
+
+    function getProjectedFG(days) {
+      const points = Object.keys(MPS_PROJECTION).map(Number).sort((a, b) => a - b);
+      if (days <= 0) return MPS_PROJECTION[0];
+      const maxDay = points[points.length - 1];
+      if (days >= maxDay) return MPS_PROJECTION[maxDay];
+      for (let i = 0; i < points.length - 1; i++) {
+        const d1 = points[i], d2 = points[i + 1];
+        if (days >= d1 && days <= d2) {
+          const ratio = (days - d1) / (d2 - d1);
+          return Math.round(MPS_PROJECTION[d1] + ratio * (MPS_PROJECTION[d2] - MPS_PROJECTION[d1]));
+        }
+      }
+      return MPS_PROJECTION[0];
+    }
+
+    function switchDecisionMode(mode) {
+      decisionMode = mode;
+      const immediateBtn = document.getElementById('mode-immediate');
+      const deferredBtn = document.getElementById('mode-deferred');
+      const deferredPanel = document.getElementById('deferred-panel');
+
+      if (mode === 'immediate') {
+        immediateBtn.className = 'px-4 py-1.5 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all';
+        deferredBtn.className = 'px-4 py-1.5 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all';
+        deferredPanel.classList.add('hidden');
+        deferredDays = 0;
+      } else {
+        immediateBtn.className = 'px-4 py-1.5 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all';
+        deferredBtn.className = 'px-4 py-1.5 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all';
+        deferredPanel.classList.remove('hidden');
+        selectDeferredDays(7);
+      }
+      updateGapDisplay();
+      recalc();
+    }
+
+    function selectDeferredDays(days) {
+      if (!days || days < 1) return;
+      deferredDays = days;
+      document.querySelectorAll('.deferred-time-btn').forEach(btn => {
+        const btnDays = parseInt(btn.dataset.days);
+        if (btnDays === days) {
+          btn.className = 'deferred-time-btn px-3 py-1.5 text-xs rounded-full border-2 border-purple-500 bg-purple-50 text-purple-700 font-medium';
+        } else {
+          btn.className = 'deferred-time-btn px-3 py-1.5 text-xs rounded-full border-2 border-gray-200 bg-white text-gray-600 hover:border-purple-300';
+        }
+      });
+      const customInput = document.getElementById('custom-days');
+      const presetDays = [3, 7, 14];
+      customInput.value = presetDays.includes(days) ? '' : days;
+      updateDeferredProjection();
+      updateGapDisplay();
+      recalc();
+    }
+
+    function selectDeferredDaysCustom() {
+      const val = parseInt(document.getElementById('custom-days').value);
+      if (val > 0 && val <= 28) selectDeferredDays(val);
+    }
+
+    function updateDeferredProjection() {
+      const currentFG = OWN_PO_FG_NOW;
+      const projectedFG = getProjectedFG(deferredDays);
+      const delta = projectedFG - currentFG;
+      const currentGap = TOTAL_DEMAND - currentFG;
+      const projectedGap = Math.max(0, TOTAL_DEMAND - projectedFG);
+      const saved = Math.max(0, currentGap - projectedGap);
+
+      document.getElementById('current-own-fg-display').textContent = currentFG.toLocaleString();
+      document.getElementById('projected-own-fg-display').textContent = projectedFG.toLocaleString();
+      document.getElementById('projected-opt1-delta').textContent = (delta >= 0 ? '+' : '') + delta.toLocaleString();
+      document.getElementById('projected-opt1-delta').className = 'text-xs ' + (delta > 0 ? 'text-green-600 font-medium' : 'text-purple-500');
+      document.getElementById('projected-gap-display').textContent = projectedGap.toLocaleString();
+      document.getElementById('projected-gap-delta').textContent = '−' + saved.toLocaleString();
+
+      if (delta > 0) {
+        document.getElementById('deferred-benefit-text').textContent =
+          `等待 ${deferredDays} 天，原PO FG 增加 ${delta.toLocaleString()} 双。Gap to Fill 从 ${currentGap.toLocaleString()} 降至 ${projectedGap.toLocaleString()} 双，可减少从 C-order/Preload/区域调货 ${saved.toLocaleString()} 双。`;
+      } else {
+        document.getElementById('deferred-benefit-text').textContent = '选择延迟时间查看可减少的调货量';
+      }
+      document.getElementById('deferred-risk-text').textContent =
+        `延迟 ${deferredDays} 天将推迟整体发货节奏。需确认客户可接受新 ETA，并监控期间其他 PO 的产能变化。`;
+    }
+
+    function updateGapDisplay() {
+      let totalDemand, ownFg, gap;
+      if (useRealData && targetItems.length > 0) {
+        totalDemand = targetItems.reduce((sum, t) => sum + t.demand, 0);
+        ownFg = targetItems.reduce((sum, t) => sum + t.fg, 0);
+        gap = targetItems.reduce((sum, t) => sum + t.shortage, 0);
+      } else {
+        totalDemand = TOTAL_DEMAND;
+        ownFg = OWN_PO_FG_NOW;
+        gap = getGap();
+      }
+      document.getElementById('total-demand-display').innerHTML = totalDemand.toLocaleString() + ' <span class="text-sm font-normal text-gray-500">pairs</span>';
+      document.getElementById('own-po-fg-display').innerHTML = ownFg.toLocaleString() + ' <span class="text-sm font-normal text-gray-500">pairs</span>';
+      document.getElementById('gap-to-fill-display').innerHTML = gap.toLocaleString() + ' <span class="text-sm font-normal text-gray-500">pairs</span>';
+      const summaryGap = document.getElementById('summary-gap');
+      if (summaryGap) summaryGap.textContent = gap.toLocaleString();
+    }
+
+    // ===== Load Scenario =====
+    function addDays(dateStr, days) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      d.setDate(d.getDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function distributeEvenly(total, count) {
+      if (count <= 0) return [];
+      // Ensure each split is a multiple of 6
+      const base = Math.floor(total / count / 6) * 6;
+      let remainder = total - base * count;
+      const result = [];
+      for (let i = 0; i < count; i++) {
+        const extra = Math.min(remainder, 6);
+        result.push(base + extra);
+        remainder -= extra;
+      }
+      return result;
+    }
+
+    function distributeByWeights(total, weights) {
+      if (total <= 0 || !weights || weights.length === 0) return weights ? weights.map(() => 0) : [];
+      const raw = weights.map(w => total * w);
+      // Round each part down to the nearest multiple of 6
+      let parts = raw.map(v => Math.floor(v / 6) * 6);
+      let remainder = total - parts.reduce((a, b) => a + b, 0);
+      const fractions = raw.map((v, i) => ({ i, frac: v - parts[i] }));
+      fractions.sort((a, b) => b.frac - a.frac);
+      // Distribute remaining pairs in chunks of 6
+      for (let i = 0; i < fractions.length && remainder >= 6; i++) {
+        parts[fractions[i].i] += 6;
+        remainder -= 6;
+      }
+      return parts;
+    }
+
+    function renderDemandPOStatus() {
+      const mode = document.querySelector('input[name="entry-mode"]:checked')?.value || 'po';
+      const tbody = document.getElementById('po-status-body');
+      const totalDemand = TOTAL_DEMAND;
+      const ownFg = OWN_PO_FG_NOW;
+      tbody.innerHTML = '';
+
+      const STYLE_COLOR_SAMPLES = [
+        { style: 'M TASMAN II', color: 'BLK' },
+        { style: 'M CLIFTON 11', color: 'BLCKP' },
+        { style: 'M CHALLENGER 8', color: 'STVR' }
+      ];
+      const SIZE_WEIGHTS = [0.20, 0.30, 0.30, 0.20];
+      const SIZE_LABELS = ['7', '8', '9', '10'];
+      const PROJECT_TYPES = ['CO', 'CU', 'MU', 'NU', 'NUL', 'NUB', 'NUBL'];
+
+      function distributeDates(count, fromStr, toStr) {
+        const from = new Date(fromStr);
+        const to = new Date(toStr);
+        if (isNaN(from) || isNaN(to) || count <= 0) return [];
+        const span = to - from;
+        const dates = [];
+        for (let i = 0; i < count; i++) {
+          const t = count === 1 ? 0 : (i / (count - 1)) * span;
+          const d = new Date(from.getTime() + t);
+          dates.push(d.toISOString().slice(0, 10));
+        }
+        return dates;
+      }
+
+      function getSample(i) {
+        return STYLE_COLOR_SAMPLES[i % STYLE_COLOR_SAMPLES.length];
+      }
+
+      function parseStyleColor(text) {
+        const parts = text.split('/').map(p => p.trim());
+        return { style: parts[0] || '-', color: parts[1] || '-' };
+      }
+
+      const xfFrom = document.getElementById('xf-from').value || '2026-08-01';
+      const xfTo = document.getElementById('xf-to').value || '2026-10-31';
+
+      targetItems = [];
+      let skuGroups = [];
+
+      if (mode === 'po') {
+        const poText = document.getElementById('po-list-input').value;
+        const lines = poText.split('\n').map(l => l.trim()).filter(Boolean);
+        let parsed = [];
+        const hasTabs = lines.some(l => l.includes('\t'));
+        if (hasTabs) {
+          // Excel-style paste: PO \t Style \t Color [\t Region]
+          parsed = lines.map(line => {
+            const parts = line.split('\t').map(p => p.trim()).filter(Boolean);
+            return { po: parts[0] || 'TBD', style: parts[1] || '-', color: parts[2] || '-' };
+          });
+        } else {
+          // Comma/newline separated PO list: auto-assign sample style/color
+          const tokens = poText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+          parsed = tokens.map((po, i) => {
+            const sample = getSample(i);
+            return { po, style: sample.style, color: sample.color };
+          });
+        }
+        parsed = parsed.filter(r => r.po !== 'TBD');
+        const count = parsed.length || 1;
+        const demandSplit = distributeEvenly(totalDemand, count);
+        const fgSplit = distributeEvenly(ownFg, count);
+        const dates = distributeDates(count, xfFrom, xfTo);
+        parsed.forEach((r, i) => {
+          skuGroups.push({
+            po: r.po,
+            projectType: PROJECT_TYPES[i % PROJECT_TYPES.length],
+            style: r.style,
+            color: r.color,
+            xfDate: dates[i] || xfTo,
+            demand: demandSplit[i] || 0,
+            fg: fgSplit[i] || 0
+          });
+        });
+        if (skuGroups.length === 0) {
+          const sample = getSample(0);
+          skuGroups.push({ po: 'TBD', projectType: PROJECT_TYPES[0], style: sample.style, color: sample.color, xfDate: xfTo, demand: totalDemand, fg: ownFg });
+        }
+      } else if (mode === 'style') {
+        const styleText = document.getElementById('style-input').value.trim();
+        const styles = styleText ? styleText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
+        const count = styles.length || 1;
+        const demandSplit = distributeEvenly(totalDemand, count);
+        const fgSplit = distributeEvenly(ownFg, count);
+        const dates = distributeDates(count, xfFrom, xfTo);
+        styles.forEach((s, i) => {
+          const sc = parseStyleColor(s);
+          const sample = getSample(i);
+          skuGroups.push({
+            po: 'Multiple',
+            projectType: PROJECT_TYPES[i % PROJECT_TYPES.length],
+            style: sc.style || sample.style,
+            color: sc.color || sample.color,
+            xfDate: dates[i] || xfTo,
+            demand: demandSplit[i] || 0,
+            fg: fgSplit[i] || 0
+          });
+        });
+        if (skuGroups.length === 0) {
+          const sample = getSample(0);
+          skuGroups.push({ po: 'Multiple', projectType: PROJECT_TYPES[0], style: sample.style, color: sample.color, xfDate: xfTo, demand: totalDemand, fg: ownFg });
+        }
+      } else {
+        const qtyStyle = document.getElementById('qty-style-input').value.trim();
+        const sc = parseStyleColor(qtyStyle);
+        const sample = getSample(0);
+        skuGroups.push({
+          po: 'TBD',
+          projectType: PROJECT_TYPES[0],
+          style: sc.style || sample.style,
+          color: sc.color || sample.color,
+          xfDate: xfTo,
+          demand: totalDemand,
+          fg: ownFg
+        });
+      }
+
+      // Explode each SKU group into Size-level rows
+      skuGroups.forEach((g, gi) => {
+        const demandBySize = distributeByWeights(g.demand, SIZE_WEIGHTS);
+        const fgBySize = distributeByWeights(g.fg, SIZE_WEIGHTS);
+        SIZE_LABELS.forEach((size, si) => {
+          const d = demandBySize[si] || 0;
+          const f = fgBySize[si] || 0;
+          targetItems.push({
+            id: 'T' + gi + '-S' + si,
+            po: g.po,
+            projectType: g.projectType,
+            style: g.style,
+            color: g.color,
+            size: size,
+            xfDate: g.xfDate,
+            demand: d,
+            fg: f,
+            shortage: Math.max(0, d - f)
+          });
+        });
+      });
+
+      renderPOTable();
+    }
+
+    function renderPOTable(truncatedNote) {
+      const tbody = document.getElementById('po-status-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      targetItems.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+        tr.innerHTML = `
+          <td class="px-3 py-2 font-medium text-gray-900">${r.po}</td>
+          <td class="px-3 py-2 text-gray-600">${r.projectType || '-'}</td>
+          <td class="px-3 py-2 text-gray-600">${r.style}</td>
+          <td class="px-3 py-2 text-gray-600">${r.color}</td>
+          <td class="px-3 py-2 text-gray-600">${r.size}</td>
+          <td class="px-3 py-2 text-gray-600">${r.xfDate}</td>
+          <td class="px-3 py-2 text-right font-medium text-gray-900">${r.demand.toLocaleString()}</td>
+          <td class="px-3 py-2 text-right text-green-600">${r.fg.toLocaleString()}</td>
+          <td class="px-3 py-2 text-right font-medium text-red-600">${r.shortage > 0 ? r.shortage.toLocaleString() : 0}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (truncatedNote) {
+        const noteRow = document.createElement('tr');
+        noteRow.innerHTML = `<td colspan="9" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${truncatedNote}</td>`;
+        tbody.appendChild(noteRow);
+      }
+
+      const totalDemandShown = targetItems.reduce((sum, r) => sum + r.demand, 0);
+      const totalFgShown = targetItems.reduce((sum, r) => sum + r.fg, 0);
+      const totalShortageShown = targetItems.reduce((sum, r) => sum + r.shortage, 0);
+      document.getElementById('po-status-total-demand').textContent = totalDemandShown.toLocaleString();
+      document.getElementById('po-status-total-fg').textContent = totalFgShown.toLocaleString();
+      document.getElementById('po-status-total-gap').textContent = totalShortageShown.toLocaleString();
+    }
+
+    function togglePOList() {
+      const wrapper = document.getElementById('po-list-table-wrapper');
+      const btn = document.getElementById('po-list-toggle-btn');
+      const span = btn.querySelector('span');
+      const svg = btn.querySelector('svg');
+      if (wrapper.classList.contains('hidden')) {
+        wrapper.classList.remove('hidden');
+        span.textContent = 'Collapse';
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>';
+      } else {
+        wrapper.classList.add('hidden');
+        span.textContent = 'Expand';
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>';
+      }
+    }
+
+    // ===== Inventory Sources & Allocation Engine =====
+    function generateInventorySources() {
+      inventorySources = [];
+      const primaryRegion = getPrimaryRegion();
+      const allRegions = ['EMEA', 'APAC', 'US', 'Canada', 'LATAM'];
+      const otherRegions = allRegions.filter(r => r !== primaryRegion);
+
+      targetItems.forEach((item, idx) => {
+        const shortage = item.shortage;
+        if (shortage <= 0) return;
+
+        // Deterministic pseudo-variability based on idx
+        const r1 = (idx * 7 + 3) % 10;
+        const r2 = (idx * 13 + 5) % 10;
+        const r3 = (idx * 17 + 7) % 10;
+        const r4 = (idx * 23 + 11) % 10;
+
+        const cOrder = Math.min(shortage, Math.floor(shortage * (0.20 + r1 * 0.04)));
+        const preload = Math.min(shortage - cOrder, Math.floor(shortage * (0.10 + r2 * 0.05)));
+        const sameRegion = Math.min(shortage - cOrder - preload, Math.floor(shortage * (0.05 + r3 * 0.04)));
+        const crossRegion = Math.min(shortage - cOrder - preload - sameRegion, Math.floor(shortage * (0.05 + r4 * 0.03)));
+
+        const add = (type, qty) => {
+          if (qty <= 0) return;
+          const isCross = type === 'cross-region';
+          const isPool = type === 'c-order' || type === 'preload';
+          // PO qty represents the source PO's total order qty; FG inventory is the available qty
+          const poQty = isPool ? qty : Math.max(qty + 1, Math.floor(qty * (1.2 + (idx % 5) * 0.05)));
+          // For same/cross-region, simulate source PO dates around the target PO date.
+          // Mixing early and late dates lets Strategy 2 (Request XF + 2w) include more POs than Strategy 1 (after target date).
+          const sameOffsets = [-10, -3, 7, 14, 21];
+          const crossOffsets = [-14, -7, 14, 28, 35];
+          let sourceXfDate = item.xfDate;
+          let sourceProjectType = item.projectType || 'CO';
+          if (type === 'same-region') {
+            sourceXfDate = addDays(item.xfDate, sameOffsets[idx % sameOffsets.length]);
+            sourceProjectType = ['CO','CU','MU','NU','NUL','NUB','NUBL'][idx % 7];
+          } else if (type === 'cross-region') {
+            sourceXfDate = addDays(item.xfDate, crossOffsets[idx % crossOffsets.length]);
+            sourceProjectType = ['CO','CU','MU','NU','NUL','NUB','NUBL'][(idx + 3) % 7];
+          }
+          inventorySources.push({
+            id: 'SRC-' + inventorySources.length,
+            sourceType: type,
+            sourcePO: type === 'c-order' ? 'C-ORDER-POOL' : type === 'preload' ? 'PRELOAD-POOL' : 'POOL-' + String(inventorySources.length).padStart(3, '0'),
+            style: item.style,
+            color: item.color,
+            size: item.size,
+            qty: qty,
+            originalQty: qty,
+            poQty: poQty,
+            region: isCross ? otherRegions[idx % otherRegions.length] : primaryRegion,
+            xfDate: sourceXfDate,
+            targetXfDate: item.xfDate,
+            projectType: sourceProjectType,
+            fee: type === 'cross-region' ? 0.60 : type === 'same-region' ? 0.40 : 0,
+            targetId: item.id
+          });
+        };
+
+        add('c-order', cOrder);
+        add('preload', preload);
+        add('same-region', sameRegion);
+        add('cross-region', crossRegion);
+      });
+    }
+
+    function getAllocatedFromSource(sourceId) {
+      return allocations.filter(a => a.sourceId === sourceId).reduce((sum, a) => sum + a.qty, 0);
+    }
+
+    function getSourceRemaining(sourceId) {
+      const src = inventorySources.find(s => s.id === sourceId);
+      if (!src) return 0;
+      return src.qty - getAllocatedFromSource(sourceId);
+    }
+
+    function getAllocatedToTarget(targetId) {
+      return allocations.filter(a => a.targetId === targetId).reduce((sum, a) => sum + a.qty, 0);
+    }
+
+    function getTargetRemaining(targetId) {
+      const t = targetItems.find(x => x.id === targetId);
+      if (!t) return 0;
+      return Math.max(0, t.shortage - getAllocatedToTarget(targetId));
+    }
+
+    function getTotalAvailableByType(type) {
+      return inventorySources.filter(s => s.sourceType === type).reduce((sum, s) => sum + s.qty, 0);
+    }
+
+    function getTotalAllocatedByType(type) {
+      return allocations.filter(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return src && src.sourceType === type;
+      }).reduce((sum, a) => sum + a.qty, 0);
+    }
+
+    function setAllocation(targetId, sourceId, qty) {
+      qty = Math.max(0, Math.floor(qty));
+      const existingIndex = allocations.findIndex(a => a.targetId === targetId && a.sourceId === sourceId);
+      const existingQty = existingIndex >= 0 ? allocations[existingIndex].qty : 0;
+
+      if (existingIndex >= 0) {
+        allocations.splice(existingIndex, 1);
+      }
+
+      if (qty <= 0) {
+        recalc();
+        return;
+      }
+
+      const src = inventorySources.find(s => s.id === sourceId);
+      const t = targetItems.find(x => x.id === targetId);
+      if (!src || !t) {
+        recalc();
+        return;
+      }
+
+      const usedFromSource = getAllocatedFromSource(sourceId) - existingQty;
+      const usedByTarget = getAllocatedToTarget(targetId) - existingQty;
+      const maxSrc = src.qty - usedFromSource;
+      const maxTarget = t.shortage - usedByTarget;
+      const finalQty = Math.min(qty, maxSrc, maxTarget);
+
+      if (finalQty > 0) {
+        allocations.push({ targetId, sourceId, qty: finalQty });
+      }
+      recalc();
+    }
+
+    function allocateAll(type) {
+      // Clear existing allocations of this type first
+      allocations = allocations.filter(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return !src || src.sourceType !== type;
+      });
+      // Sort sources by target shortage descending
+      const sources = inventorySources.filter(s => s.sourceType === type).sort((a, b) => {
+        const ta = targetItems.find(t => t.id === a.targetId);
+        const tb = targetItems.find(t => t.id === b.targetId);
+        return (tb ? tb.shortage : 0) - (ta ? ta.shortage : 0);
+      });
+      sources.forEach(src => {
+        const target = targetItems.find(t => t.id === src.targetId);
+        if (!target) return;
+        const remainingTarget = getTargetRemaining(target.id);
+        const qty = Math.min(src.qty, remainingTarget);
+        if (qty > 0) {
+          allocations.push({ targetId: target.id, sourceId: src.id, qty });
+        }
+      });
+      recalc();
+    }
+
+    function clearAllocations(type) {
+      allocations = allocations.filter(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return !src || src.sourceType !== type;
+      });
+      recalc();
+    }
+
+    function resetAllocations() {
+      allocations = [];
+    }
+
+    function updateStrategyButtons(opt, strategy) {
+      const btn1 = document.getElementById(opt + '-strategy-btn1');
+      const btn2 = document.getElementById(opt + '-strategy-btn2');
+      if (!btn1 || !btn2) return;
+      const activeClass = opt === 'opt3' ? 'bg-white text-teal-700 shadow-sm' : 'bg-white text-orange-700 shadow-sm';
+      const inactiveClass = 'text-gray-500 hover:text-gray-700';
+      if (strategy === 'strategy1') {
+        btn1.className = 'px-2 py-1 text-xs rounded-md font-medium transition-all ' + activeClass;
+        btn2.className = 'px-2 py-1 text-xs rounded-md font-medium transition-all ' + inactiveClass;
+      } else {
+        btn1.className = 'px-2 py-1 text-xs rounded-md font-medium transition-all ' + inactiveClass;
+        btn2.className = 'px-2 py-1 text-xs rounded-md font-medium transition-all ' + activeClass;
+      }
+    }
+
+    function renderOptionCards() {
+      const types = ['c-order', 'preload', 'same-region', 'cross-region'];
+      const optMap = { 'c-order': 'opt1', 'preload': 'opt2', 'same-region': 'opt3', 'cross-region': 'opt4' };
+      types.forEach(type => {
+        const opt = optMap[type];
+        const available = getTotalAvailableByType(type);
+        const allocated = getTotalAllocatedByType(type);
+        const display = document.getElementById(opt + '-available-display');
+        if (display) display.innerHTML = available.toLocaleString() + ' <span class="text-sm font-normal">pairs</span>';
+        const allocatedDisplay = document.getElementById(opt + '-allocated-display');
+        if (allocatedDisplay) allocatedDisplay.textContent = allocated.toLocaleString();
+
+        const useAllBtn = document.getElementById(opt + '-use-all');
+        const clearBtn = document.getElementById(opt + '-clear');
+        const checked = document.getElementById(opt + '-check').checked;
+        if (useAllBtn) {
+          useAllBtn.disabled = !checked || available === 0;
+        }
+        if (clearBtn) {
+          clearBtn.disabled = !checked || allocated === 0;
+        }
+      });
+
+      // Update source PO summary for opt3/opt4
+      const updateSourceSummary = (type, opt) => {
+        const listContainer = document.getElementById(opt + '-source-list');
+        const countEl = document.getElementById(opt + '-source-count');
+        const qtyEl = document.getElementById(opt + '-source-qty');
+        const noteEl = document.getElementById(opt + '-strategy-note');
+        const checked = document.getElementById(opt + '-check').checked;
+        if (listContainer) listContainer.classList.toggle('hidden', !checked);
+        if (noteEl) {
+          const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
+          noteEl.textContent = strategy === 'strategy1'
+            ? '策略1 · 仅取交期晚于目标 PO 的库存'
+            : '策略2 · Updated ETA 已按 Project Type 计算';
+        }
+        if (!checked || !countEl || !qtyEl) return;
+        const sources = inventorySources.filter(s => s.sourceType === type && s.qty > 0).sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
+        const totalQty = sources.reduce((sum, s) => sum + (s.qty || 0), 0);
+        countEl.textContent = sources.length.toLocaleString();
+        qtyEl.textContent = totalQty.toLocaleString();
+      };
+
+      updateSourceSummary('same-region', 'opt3');
+      updateSourceSummary('cross-region', 'opt4');
+
+      updateStrategyButtons('opt3', opt3Strategy);
+      updateStrategyButtons('opt4', opt4Strategy);
+    }
+
+    function openSourcePOModal(opt) {
+      const modal = document.getElementById('source-po-modal');
+      const title = document.getElementById('source-po-modal-title');
+      const subtitle = document.getElementById('source-po-modal-subtitle');
+      const head = document.getElementById('source-po-modal-head');
+      const body = document.getElementById('source-po-modal-body');
+      if (!modal || !head || !body) return;
+
+      const type = opt === 'opt3' ? 'same-region' : 'cross-region';
+      const includeRegion = type === 'cross-region';
+      const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
+
+      title.textContent = opt === 'opt3' ? 'Option 3 — Same-Region Source POs' : 'Option 4 — Cross-Region Source POs';
+      subtitle.textContent = strategy === 'strategy1'
+        ? 'Strategy 1: Source POs with confirmed XF date later than target PO'
+        : 'Strategy 2: Source POs after cutoff (+14 days) with Updated ETA by Project Type';
+
+      const headers = [];
+      if (includeRegion) headers.push('Region');
+      headers.push('Source PO', 'Project Type', 'Conf XF date', 'Updated ETA', 'PO qty', 'Style', 'Color', 'Size', 'FG inventory');
+      head.innerHTML = headers.map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
+
+      const sources = inventorySources
+        .filter(s => s.sourceType === type && s.allowed)
+        .sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
+
+      if (sources.length === 0) {
+        body.innerHTML = '<tr><td colspan="' + headers.length + '" class="py-8 text-center text-sm text-gray-400">No available source POs</td></tr>';
+      } else {
+        body.innerHTML = sources.map(s => {
+          const regionCell = includeRegion ? `<td class="px-3 py-2 text-gray-600">${s.region || '-'}</td>` : '';
+          return `<tr class="hover:bg-gray-50">
+            ${regionCell}
+            <td class="px-3 py-2 font-medium text-gray-900">${s.sourcePO}</td>
+            <td class="px-3 py-2 text-gray-600">${s.projectType || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${s.xfDate || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${s.impactedEta || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${(s.poQty || s.originalQty || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-gray-600">${s.style}</td>
+            <td class="px-3 py-2 text-gray-600">${s.color}</td>
+            <td class="px-3 py-2 text-gray-600">${s.size}</td>
+            <td class="px-3 py-2 text-right font-medium text-gray-900">${(s.originalQty || s.qty || 0).toLocaleString()}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSourcePOModal() {
+      const modal = document.getElementById('source-po-modal');
+      if (modal) modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function renderAllocationMatrix() {
+      const tbody = document.getElementById('allocation-matrix-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      const types = ['c-order', 'preload', 'same-region', 'cross-region'];
+      const typeToOpt = { 'c-order': 'opt1', 'preload': 'opt2', 'same-region': 'opt3', 'cross-region': 'opt4' };
+
+      targetItems.forEach(t => {
+        const covered = getAllocatedToTarget(t.id);
+        const remaining = Math.max(0, t.shortage - covered);
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50';
+
+        let cells = `
+          <td class="px-3 py-2 font-medium text-gray-900">${t.po}</td>
+          <td class="px-3 py-2 text-gray-600">${t.style}</td>
+          <td class="px-3 py-2 text-gray-600">${t.color}</td>
+          <td class="px-3 py-2 text-gray-600">${t.size}</td>
+          <td class="px-3 py-2 text-right font-medium text-red-600">${t.shortage.toLocaleString()}</td>
+        `;
+
+        types.forEach(type => {
+          const opt = typeToOpt[type];
+          const optChecked = document.getElementById(opt + '-check').checked;
+          const sources = inventorySources.filter(s => s.sourceType === type && s.targetId === t.id);
+          const totalAllocated = sources.reduce((sum, s) => {
+            const a = allocations.find(al => al.targetId === t.id && al.sourceId === s.id);
+            return sum + (a ? a.qty : 0);
+          }, 0);
+          if (!optChecked || sources.length === 0) {
+            cells += `<td class="px-3 py-2 text-right"><span class="text-xs text-gray-300">-</span></td>`;
+          } else {
+            cells += `<td class="px-3 py-2 text-right font-medium text-gray-900">${totalAllocated.toLocaleString()}</td>`;
+          }
+        });
+
+        cells += `
+          <td class="px-3 py-2 text-right font-medium text-blue-600">${covered.toLocaleString()}</td>
+          <td class="px-3 py-2 text-right font-medium ${remaining > 0 ? 'text-red-600' : 'text-green-600'}">${remaining.toLocaleString()}</td>
+        `;
+
+        tr.innerHTML = cells;
+        tbody.appendChild(tr);
+      });
+
+      // Total row
+      const totalShortage = targetItems.reduce((sum, t) => sum + t.shortage, 0);
+      const totalCovered = allocations.reduce((sum, a) => sum + a.qty, 0);
+      const totalRemaining = Math.max(0, totalShortage - totalCovered);
+      let totalCells = `
+        <td class="px-3 py-2 font-medium text-gray-900" colspan="4">Total</td>
+        <td class="px-3 py-2 text-right font-medium text-red-600">${totalShortage.toLocaleString()}</td>
+      `;
+      types.forEach(type => {
+        const opt = typeToOpt[type];
+        const optChecked = document.getElementById(opt + '-check').checked;
+        const typeAllocated = getTotalAllocatedByType(type);
+        if (!optChecked) {
+          totalCells += `<td class="px-3 py-2 text-right"><span class="text-xs text-gray-300">-</span></td>`;
+        } else {
+          totalCells += `<td class="px-3 py-2 text-right font-medium text-gray-900">${typeAllocated.toLocaleString()}</td>`;
+        }
+      });
+      totalCells += `
+        <td class="px-3 py-2 text-right font-medium text-blue-600">${totalCovered.toLocaleString()}</td>
+        <td class="px-3 py-2 text-right font-medium ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}">${totalRemaining.toLocaleString()}</td>
+      `;
+      const totalRow = document.createElement('tr');
+      totalRow.className = 'bg-gray-50 font-medium border-t border-gray-200';
+      totalRow.innerHTML = totalCells;
+      tbody.appendChild(totalRow);
+    }
+
+    function toggleAllocationMatrix() {
+      const wrapper = document.getElementById('allocation-matrix-table-wrapper');
+      const btn = document.getElementById('allocation-matrix-toggle-btn');
+      const span = btn.querySelector('span');
+      const svg = btn.querySelector('svg');
+      if (wrapper.classList.contains('hidden')) {
+        wrapper.classList.remove('hidden');
+        span.textContent = 'Collapse';
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>';
+      } else {
+        wrapper.classList.add('hidden');
+        span.textContent = 'Expand';
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>';
+      }
+    }
+
+    function autoAllocateAll() {
+      const typeToOpt = { 'c-order': 'opt1', 'preload': 'opt2', 'same-region': 'opt3', 'cross-region': 'opt4' };
+      resetAllocations();
+      ['c-order', 'preload', 'same-region', 'cross-region'].forEach(type => {
+        const opt = typeToOpt[type];
+        if (document.getElementById(opt + '-check').checked) {
+          allocateAll(type);
+        }
+      });
+    }
+
+    // ===== Candidate selection helpers =====
+    const PROJECT_TYPES_ALL = ['CO', 'CU', 'MU', 'NU', 'NUL', 'NUB', 'NUBL'];
+
+    function isNotShippedStatus(status) {
+      if (!status) return true;
+      const s = String(status).trim().toLowerCase();
+      return s !== 'shipped' && s !== 'closed' && s !== '已出货' && s !== 'done';
+    }
+
+    function parseStyleColorInput(text) {
+      if (!text) return null;
+      const parts = text.split('/').map(p => p.trim()).filter(Boolean);
+      if (parts.length === 0) return null;
+      return { style: parts[0] || '', color: parts[1] || '' };
+    }
+
+    function styleColorMatches(row, sc) {
+      if (!sc) return true;
+      const inputStyle = sc.style ? sc.style.toLowerCase().trim() : '';
+      const inputColor = sc.color ? sc.color.toLowerCase().trim() : '';
+      const rowStyleName = String(row.style_name || '').toLowerCase().trim();
+      const rowStyleNumber = String(row.style_number || '').toLowerCase().trim();
+      const rowColor = String(row.color_code || row.color || '').toLowerCase().trim();
+      const styleMatch = !inputStyle || rowStyleName === inputStyle || rowStyleNumber === inputStyle || rowStyleName.includes(inputStyle);
+      const colorMatch = !inputColor || rowColor === inputColor || rowColor.includes(inputColor);
+      return styleMatch && colorMatch;
+    }
+
+    function generateDemoCandidates(mode, targetXfDate, styles, minQty, preferredStyle) {
+      const STYLE_COLOR_SAMPLES = [
+        { style: 'M TASMAN II', color: 'BLK' },
+        { style: 'M CLIFTON 11', color: 'BLCKP' },
+        { style: 'M CHALLENGER 8', color: 'STVR' }
+      ];
+      const SIZE_LABELS = ['7', '8', '9', '10'];
+      const SIZE_WEIGHTS = [0.20, 0.30, 0.30, 0.20];
+      const region = document.getElementById('target-region').value || 'EMEA';
+      const rows = [];
+      let idx = 0;
+      const addPO = (styleObj, dateOffsetDays) => {
+        const poNum = 'DEMO-' + String(idx).padStart(5, '0');
+        const poTotal = 240 + (idx % 6) * 120; // 240 ~ 840
+        const demandBySize = distributeByWeights(poTotal, SIZE_WEIGHTS);
+        const dateStr = addDays(targetXfDate, dateOffsetDays);
+        SIZE_LABELS.forEach((size, si) => {
+          const qty = demandBySize[si] || 0;
+          const fg = Math.min(qty, Math.floor(qty * 0.1));
+          rows.push({
+            id: 'DEMO-' + idx + '-' + size,
+            po_number: poNum,
+            style_number: 'STY' + idx,
+            style_name: styleObj.style,
+            color_code: styleObj.color,
+            size: size,
+            target_region: region,
+            conf_xf_date: dateStr,
+            po_production_status: 'Unstarted',
+            factory_project_type: PROJECT_TYPES_ALL[idx % PROJECT_TYPES_ALL.length],
+            po_qty: qty,
+            fg_inventory: fg,
+            shortage: Math.max(0, qty - fg),
+            c_order: 0, preload: 0, same_region: 0, cross_region: 0
+          });
+        });
+        idx++;
+      };
+      if (mode === 'style') {
+        if (!styles || styles.length === 0) return [];
+        styles.forEach((sc, i) => {
+          const styleObj = (sc && sc.style) ? sc : STYLE_COLOR_SAMPLES[i % STYLE_COLOR_SAMPLES.length];
+          addPO(styleObj, 7 + i * 7);
+          addPO(styleObj, 14 + i * 7);
+          addPO(styleObj, 21 + i * 7);
+        });
+        return rows.filter(r => r.conf_xf_date > targetXfDate);
+      } else {
+        const styleObj = (preferredStyle && preferredStyle.style) ? preferredStyle : STYLE_COLOR_SAMPLES[0];
+        let sum = 0;
+        let offset = 7;
+        while (sum < minQty && offset <= 84) {
+          addPO(styleObj, offset);
+          sum = rows.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+          offset += 7;
+        }
+        return rows;
+      }
+    }
+
+    function findCandidates(mode) {
+      const targetXfDate = document.getElementById('request-xf-date').value;
+      if (!targetXfDate) return [];
+      let candidates = [];
+      if (mode === 'style') {
+        const styleText = document.getElementById('style-input').value.trim();
+        const styles = styleText.split(/[\n,]+/).map(s => parseStyleColorInput(s)).filter(Boolean);
+        if (styles.length === 0) return [];
+        if (useRealData && realData) {
+          candidates = realData.filter(r => {
+            if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
+            if (!isNotShippedStatus(r.po_production_status)) return false;
+            return styles.some(sc => styleColorMatches(r, sc));
+          });
+          // Fallback: if no style-color match, show all not-yet-shipped POs after target date
+          if (candidates.length === 0) {
+            candidates = realData.filter(r => {
+              if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
+              if (!isNotShippedStatus(r.po_production_status)) return false;
+              return true;
+            });
+          }
+        } else {
+          candidates = generateDemoCandidates('style', targetXfDate, styles);
+        }
+      } else if (mode === 'qty') {
+        const minQty = Number(document.getElementById('qty-input').value) || 0;
+        if (minQty <= 0) return [];
+        const preferred = parseStyleColorInput(document.getElementById('qty-style-input').value.trim());
+        if (useRealData && realData) {
+          const late = realData.filter(r => {
+            if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
+            if (!isNotShippedStatus(r.po_production_status)) return false;
+            return styleColorMatches(r, preferred);
+          }).sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || ''));
+          let sum = 0;
+          const selected = [];
+          for (const r of late) {
+            if (sum >= minQty) break;
+            selected.push(r);
+            sum += Number(r.po_qty) || 0;
+          }
+          candidates = selected;
+        } else {
+          candidates = generateDemoCandidates('qty', targetXfDate, null, minQty, preferred);
+        }
+      }
+      return candidates.map((r, i) => ({ ...r, id: r.id || ('CAND-' + i) }));
+    }
+
+    function renderCandidateTable() {
+      const tbody = document.getElementById('candidate-body');
+      const selectAll = document.getElementById('candidate-select-all');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (candidateItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="px-3 py-6 text-center text-gray-400 text-sm">No candidate POs found</td></tr>';
+      } else {
+        candidateItems.forEach(r => {
+          const checked = selectedCandidateIds.has(r.id) ? 'checked' : '';
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-gray-50';
+          tr.innerHTML = `
+            <td class="px-3 py-2"><input type="checkbox" class="candidate-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-id="${r.id}" onchange="toggleCandidate('${r.id}', this.checked)" ${checked}></td>
+            <td class="px-3 py-2 font-medium text-gray-900">${r.po_number}</td>
+            <td class="px-3 py-2 text-gray-600">${r.factory_project_type || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${r.style_name || r.style_number || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${r.color_code || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${String(r.size).trim()}</td>
+            <td class="px-3 py-2 text-gray-600">${r.conf_xf_date || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${r.po_production_status || '-'}</td>
+            <td class="px-3 py-2 text-right font-medium text-gray-900">${(Number(r.po_qty) || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right text-green-600">${(Number(r.fg_inventory) || 0).toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-medium text-red-600">${(r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0))).toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      if (selectAll) selectAll.checked = candidateItems.length > 0 && selectedCandidateIds.size === candidateItems.length;
+      updateCandidateSummary();
+    }
+
+    function updateCandidateSummary() {
+      const selected = candidateItems.filter(r => selectedCandidateIds.has(r.id));
+      const poSet = new Set(selected.map(r => r.po_number));
+      const demand = selected.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+      const fg = selected.reduce((s, r) => s + (Number(r.fg_inventory) || 0), 0);
+      const gap = selected.reduce((s, r) => s + (r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0))), 0);
+      const summary = document.getElementById('candidate-summary');
+      if (summary) summary.textContent = `${poSet.size.toLocaleString()} POs selected · ${demand.toLocaleString()} pairs`;
+      const totalDemandEl = document.getElementById('candidate-total-demand');
+      const totalFgEl = document.getElementById('candidate-total-fg');
+      const totalGapEl = document.getElementById('candidate-total-gap');
+      if (totalDemandEl) totalDemandEl.textContent = demand.toLocaleString();
+      if (totalFgEl) totalFgEl.textContent = fg.toLocaleString();
+      if (totalGapEl) totalGapEl.textContent = gap.toLocaleString();
+    }
+
+    function toggleCandidate(id, checked) {
+      if (checked) selectedCandidateIds.add(id);
+      else selectedCandidateIds.delete(id);
+      renderCandidateTable();
+    }
+
+    function toggleAllCandidates(checked) {
+      if (checked) candidateItems.forEach(r => selectedCandidateIds.add(r.id));
+      else selectedCandidateIds.clear();
+      renderCandidateTable();
+    }
+
+    function confirmCandidateSelection() {
+      const selected = candidateItems.filter(r => selectedCandidateIds.has(r.id));
+      if (selected.length === 0) {
+        alert('请至少选择一个 PO');
+        return;
+      }
+      if (useRealData) {
+        buildRealScenario(selected, '');
+      } else {
+        targetItems = selected.map((r, i) => ({
+          id: 'T' + i,
+          po: 'PO#' + r.po_number,
+          projectType: r.factory_project_type || 'CO',
+          style: r.style_name || String(r.style_number),
+          color: r.color_code,
+          size: String(r.size).trim(),
+          xfDate: r.conf_xf_date,
+          demand: Number(r.po_qty) || 0,
+          fg: Number(r.fg_inventory) || 0,
+          shortage: r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0))
+        }));
+        generateInventorySources();
+        renderPOTable();
+        updateTargetCountsFromItems();
+        updateGapDisplay();
+      }
+      document.getElementById('candidate-section').classList.add('hidden');
+      document.getElementById('gap-section').classList.remove('hidden');
+      document.getElementById('po-status-section').classList.remove('hidden');
+      document.getElementById('options-section').classList.remove('hidden');
+      document.getElementById('allocation-section').classList.remove('hidden');
+      document.getElementById('summary-section').classList.remove('hidden');
+      applyOptionStrategies();
+      resetAllocations();
+      renderOptionCards();
+      renderAllocationMatrix();
+      recalc();
+    }
+
+    function loadScenario() {
+      // Reset option UI so allocations start fresh
+      ['opt1', 'opt2', 'opt3', 'opt4'].forEach(opt => {
+        const check = document.getElementById(opt + '-check');
+        if (check) check.checked = false;
+        const card = document.getElementById(opt + '-card');
+        if (card) card.classList.remove('selected');
+        const impact = document.getElementById(opt + '-impact');
+        if (impact) impact.classList.add('hidden');
+      });
+      document.getElementById('candidate-section').classList.add('hidden');
+
+      if (entryMode === 'style' || entryMode === 'qty') {
+        const targetXfDate = document.getElementById('request-xf-date').value;
+        if (!targetXfDate) {
+          alert('请在 Target XF Date 中填写目标日期');
+          return;
+        }
+        const candidates = findCandidates(entryMode);
+        if (candidates.length === 0) {
+          const loadedRows = (useRealData && realData) ? realData.length : 0;
+          const hint = useRealData
+            ? `（已加载 ${loadedRows.toLocaleString()} 行，请检查 Target XF Date 是否早于数据日期，或 Style-Color 是否匹配）`
+            : '（请检查 Target XF Date 是否填写，或尝试 Quantity 模式）';
+          alert('未找到符合条件的候选 PO\n' + hint);
+          return;
+        }
+        candidateItems = candidates;
+        selectedCandidateIds = new Set(candidates.map(c => c.id));
+        renderCandidateTable();
+        ['gap-section', 'po-status-section', 'options-section', 'allocation-section', 'summary-section'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('hidden');
+        });
+        document.getElementById('candidate-section').classList.remove('hidden');
+        return;
+      }
+
+      if (useRealData && realData) {
+        buildRealScenario();
+      } else {
+        updateTargetMetrics();
+        updateGapDisplay();
+        renderDemandPOStatus();
+        updateTargetCountsFromItems();
+        generateInventorySources();
+      }
+      applyOptionStrategies();
+      resetAllocations();
+      renderOptionCards();
+      renderAllocationMatrix();
+      document.getElementById('gap-section').classList.remove('hidden');
+      document.getElementById('po-status-section').classList.remove('hidden');
+      // decision-mode-panel hidden by default; logic preserved below
+      document.getElementById('options-section').classList.remove('hidden');
+      document.getElementById('allocation-section').classList.remove('hidden');
+      document.getElementById('summary-section').classList.remove('hidden');
+      recalc();
+    }
+
+    // ===== Real Data Integration =====
+    function toISODate(value) {
+      if (!value) return '';
+      if (value instanceof Date && !isNaN(value)) return value.toISOString().slice(0, 10);
+      const s = String(value).trim();
+      if (!s) return '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      return !isNaN(d) ? d.toISOString().slice(0, 10) : s;
+    }
+
+    function normalizeRealDataRow(raw) {
+      if (!raw || typeof raw !== 'object') return {};
+      const norm = {};
+      Object.keys(raw).forEach(k => {
+        norm[k.toLowerCase().trim()] = raw[k];
+      });
+      return {
+        po_number: String(norm.po_number ?? '').trim(),
+        style_number: String(norm.style_number ?? '').trim(),
+        style_name: String(norm.style_name ?? '').trim(),
+        color_code: String(norm.color_code ?? '').trim(),
+        size: String(norm.size ?? '').trim(),
+        target_region: String(norm.target_region ?? '').trim(),
+        factory_project_type: String(norm.factory_project_type ?? '').trim(),
+        po_production_status: String(norm.po_production_status ?? norm.order_status ?? '').trim(),
+        conf_xf_date: toISODate(norm.conf_xf_date),
+        original_confirm_xf_date: toISODate(norm.original_confirm_xf_date),
+        request_xf_date: toISODate(norm.request_xf_date),
+        po_qty: Number(norm.po_qty) || 0,
+        fg_inventory: Number(norm.fg_inventory) || 0,
+        shortage: Number(norm.shortage) || 0,
+        c_order: Number(norm.c_order) || 0,
+        preload: Number(norm.preload) || 0,
+        same_region: Number(norm.same_region) || 0,
+        cross_region: Number(norm.cross_region) || 0
+      };
+    }
+
+    function parseExcelArrayBuffer(arrayBuffer) {
+      if (typeof XLSX === 'undefined') throw new Error('Excel library not loaded');
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      return rows.map(normalizeRealDataRow);
+    }
+
+    function handleRealDataFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const status = document.getElementById('real-data-status');
+      const clearBtn = document.getElementById('clear-real-data-btn');
+      status.textContent = 'Loading...';
+      const ext = file.name.split('.').pop().toLowerCase();
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let rows;
+          if (ext === 'xlsx') {
+            rows = parseExcelArrayBuffer(e.target.result);
+          } else {
+            rows = JSON.parse(e.target.result);
+            if (!Array.isArray(rows)) throw new Error('JSON must be an array of rows');
+            rows = rows.map(normalizeRealDataRow);
+          }
+          // Drop header-like rows
+          realData = rows.filter(r => r.po_number && String(r.po_number).toLowerCase() !== 'po_number');
+          useRealData = true;
+          status.textContent = `Loaded ${realData.length.toLocaleString()} rows`;
+          clearBtn.disabled = false;
+          // Auto-fit date range to data
+          const dates = realData.map(r => r.conf_xf_date).filter(Boolean).sort();
+          if (dates.length) {
+            document.getElementById('xf-from').value = dates[0];
+            document.getElementById('xf-to').value = dates[dates.length - 1];
+          }
+          // Auto-fit region if uniform
+          const regions = [...new Set(realData.map(r => r.target_region).filter(Boolean))];
+          if (regions.length === 1) {
+            document.getElementById('target-region').value = regions[0];
+            document.getElementById('target-region-display').textContent = regions[0];
+          }
+        } catch (err) {
+          status.textContent = 'Failed: ' + (err.message || 'unknown error');
+          console.error(err);
+        }
+      };
+      reader.onerror = function() {
+        status.textContent = 'Failed: could not read file';
+      };
+      if (ext === 'xlsx') {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
+    }
+
+    function clearRealData() {
+      realData = null;
+      useRealData = false;
+      candidateItems = [];
+      selectedCandidateIds.clear();
+      document.getElementById('real-data-status').textContent = 'Using demo data';
+      document.getElementById('real-data-file').value = '';
+      document.getElementById('clear-real-data-btn').disabled = true;
+      document.getElementById('xf-from').value = '2026-08-01';
+      document.getElementById('xf-to').value = '2026-10-31';
+      document.getElementById('target-region').value = 'EMEA';
+      document.getElementById('target-region-display').textContent = 'EMEA';
+      const candidateSection = document.getElementById('candidate-section');
+      if (candidateSection) candidateSection.classList.add('hidden');
+    }
+
+    function buildRealScenario(rowsOverride, noteOverride) {
+      let filtered = [];
+      let truncatedNote = noteOverride || '';
+      if (rowsOverride && Array.isArray(rowsOverride)) {
+        filtered = rowsOverride;
+      } else {
+        const xfFrom = document.getElementById('xf-from').value || '2026-08-01';
+        const xfTo = document.getElementById('xf-to').value || '2026-10-31';
+        const poText = document.getElementById('po-list-input').value;
+        const poTokens = poText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+        const poSet = new Set(poTokens.map(s => s.replace(/^PO#?/i, '')));
+
+        filtered = realData.filter(r => {
+          if (r.conf_xf_date && (r.conf_xf_date < xfFrom || r.conf_xf_date > xfTo)) return false;
+          if (poSet.size > 0 && !poSet.has(String(r.po_number))) return false;
+          return true;
+        });
+
+        if (filtered.length > 500) {
+          filtered.sort((a, b) => (b.shortage || 0) - (a.shortage || 0));
+          filtered = filtered.slice(0, 500);
+          truncatedNote = `Showing top 500 rows by shortage (${filtered.length} matched). Narrow by PO list or date range to see all.`;
+        }
+      }
+
+      const otherRegions = ['APAC', 'US', 'Canada', 'LATAM'];
+      targetItems = filtered.map((r, i) => ({
+        id: 'R' + i,
+        po: 'PO#' + r.po_number,
+        projectType: r.factory_project_type || 'CO',
+        style: r.style_name || String(r.style_number),
+        color: r.color_code,
+        size: String(r.size).trim(),
+        xfDate: r.conf_xf_date,
+        demand: r.po_qty || 0,
+        fg: r.fg_inventory || 0,
+        shortage: r.shortage || Math.max(0, (r.po_qty || 0) - (r.fg_inventory || 0))
+      }));
+
+      inventorySources = [];
+      targetItems.forEach((t, i) => {
+        const r = filtered[i];
+        const add = (type, qty) => {
+          if (!qty || qty <= 0) return;
+          const isCross = type === 'cross-region';
+          const isSame = type === 'same-region';
+          const isPool = type === 'c-order' || type === 'preload';
+          // Mix early/late source dates so Strategy 2 can include more POs than Strategy 1
+          const sameOffsets = [-10, -3, 7, 14, 21];
+          const crossOffsets = [-14, -7, 14, 28, 35];
+          let sourceXfDate = t.xfDate;
+          let sourceProjectType = t.projectType;
+          let sourcePO = t.po;
+          if (isSame) {
+            sourceXfDate = addDays(t.xfDate, sameOffsets[i % sameOffsets.length]);
+            sourceProjectType = ['CO','CU','MU','NU','NUL','NUB','NUBL'][i % 7];
+            sourcePO = 'SRC-' + r.po_number + '-SAME';
+          } else if (isCross) {
+            sourceXfDate = addDays(t.xfDate, crossOffsets[i % crossOffsets.length]);
+            sourceProjectType = ['CO','CU','MU','NU','NUL','NUB','NUBL'][(i + 3) % 7];
+            sourcePO = 'SRC-' + r.po_number + '-CROSS';
+          }
+          inventorySources.push({
+            id: 'SRC-R' + i + '-' + type,
+            sourceType: type,
+            sourcePO: sourcePO,
+            style: t.style,
+            color: t.color,
+            size: t.size,
+            qty: qty,
+            originalQty: qty,
+            poQty: isPool ? qty : t.demand,
+            region: isCross ? otherRegions[i % otherRegions.length] : (r.target_region || 'EMEA'),
+            xfDate: sourceXfDate,
+            targetXfDate: t.xfDate,
+            projectType: sourceProjectType,
+            fee: isCross ? 0.60 : isSame ? 0.40 : 0,
+            targetId: t.id
+          });
+        };
+        add('c-order', r.c_order);
+        add('preload', r.preload);
+        add('same-region', r.same_region);
+        add('cross-region', r.cross_region);
+      });
+
+      renderPOTable(truncatedNote);
+      updateTargetCountsFromItems();
+      updateGapDisplay();
+    }
+
+    function applyOptionStrategies() {
+      const requestDateInput = document.getElementById('request-xf-date').value;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const cutoffStrategy2 = addDays(requestDateInput || todayStr, 14);
+      inventorySources.forEach(s => {
+        if (s.sourceType !== 'same-region' && s.sourceType !== 'cross-region') return;
+        const strategy = s.sourceType === 'same-region' ? opt3Strategy : opt4Strategy;
+        const target = targetItems.find(t => t.id === s.targetId);
+        const targetDate = target ? target.xfDate : s.targetXfDate;
+        let allowed = false;
+        if (strategy === 'strategy1') {
+          allowed = s.xfDate > targetDate;
+        } else {
+          allowed = s.xfDate > cutoffStrategy2;
+        }
+        s.allowed = allowed;
+        s.qty = allowed ? (s.originalQty || 0) : 0;
+        if (strategy === 'strategy2' && allowed) {
+          const leadDays = LEADTIME_MAP[s.projectType] || 0;
+          s.impactedEta = addDays(s.xfDate, leadDays);
+        } else {
+          s.impactedEta = '';
+        }
+      });
+    }
+
+    function setOptionStrategy(opt, strategy) {
+      if (opt === 'opt3') opt3Strategy = strategy;
+      if (opt === 'opt4') opt4Strategy = strategy;
+      const typeMap = { opt3: 'same-region', opt4: 'cross-region' };
+      const type = typeMap[opt];
+      const check = document.getElementById(opt + '-check');
+      if (type) {
+        allocations = allocations.filter(a => {
+          const src = inventorySources.find(s => s.id === a.sourceId);
+          return !src || src.sourceType !== type;
+        });
+      }
+      applyOptionStrategies();
+      if (check && check.checked && type) {
+        allocateAll(type);
+      } else {
+        recalc();
+      }
+    }
+
+    // ===== Toggle Options =====
+    function toggleOption(opt) {
+      const card = document.getElementById(opt + '-card');
+      const check = document.getElementById(opt + '-check');
+      const impact = document.getElementById(opt + '-impact');
+      const typeMap = { opt1: 'c-order', opt2: 'preload', opt3: 'same-region', opt4: 'cross-region' };
+      const type = typeMap[opt];
+
+      if (check.checked) {
+        card.classList.add('selected');
+        if (impact) impact.classList.remove('hidden');
+        // Auto-allocate all available inventory of this type
+        if (type) allocateAll(type);
+      } else {
+        card.classList.remove('selected');
+        if (impact) impact.classList.add('hidden');
+        // Clear allocations of this type when unchecked
+        if (type) {
+          allocations = allocations.filter(a => {
+            const src = inventorySources.find(s => s.id === a.sourceId);
+            return !src || src.sourceType !== type;
+          });
+        }
+        recalc();
+      }
+    }
+
+    // ===== Recalculate Everything =====
+    function recalc() {
+      const gap = getGap();
+      const opt1 = getTotalAllocatedByType('c-order');
+      const opt2 = getTotalAllocatedByType('preload');
+      const opt3 = getTotalAllocatedByType('same-region');
+      const opt3Cost = allocations.reduce((sum, a) => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return sum + (src && src.sourceType === 'same-region' ? a.qty * src.fee : 0);
+      }, 0);
+      const opt4 = getTotalAllocatedByType('cross-region');
+      const opt4Cost = allocations.reduce((sum, a) => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return sum + (src && src.sourceType === 'cross-region' ? a.qty * src.fee : 0);
+      }, 0);
+
+      const total = opt1 + opt2 + opt3 + opt4;
+      const remaining = Math.max(0, gap - total);
+
+      // All options (1-4) are external sources that replace original PO production plan
+      const externalTotal = total;
+      const rmMax = 2500;
+      const wipNonCancelable = Math.max(0, externalTotal - rmMax);
+      const wipRepackCost = wipNonCancelable * 0.30;
+      const totalRepackCost = opt3Cost + opt4Cost + wipRepackCost;
+
+      // Update summary numbers
+      document.getElementById('total-support').textContent = total.toLocaleString();
+      document.getElementById('remaining-gap').textContent = remaining.toLocaleString();
+      document.getElementById('total-cost').textContent = '$' + Math.round(totalRepackCost).toLocaleString();
+
+      const fulfillmentEl = document.getElementById('fulfillment-rate');
+      if (fulfillmentEl) {
+        const rate = gap > 0 ? Math.min(100, (total / gap) * 100).toFixed(1) : 0;
+        fulfillmentEl.textContent = rate + '%';
+      }
+
+      // Update cost label
+      const costLabel = document.getElementById('total-cost-label');
+      if (totalRepackCost === 0) {
+        costLabel.textContent = 'No repack cost';
+      } else {
+        const parts = [];
+        if (opt3Cost > 0) parts.push('Opt 3: $' + Math.round(opt3Cost).toLocaleString());
+        if (opt4Cost > 0) parts.push('Opt 4: $' + Math.round(opt4Cost).toLocaleString());
+        if (wipRepackCost > 0) parts.push('WIP: $' + Math.round(wipRepackCost).toLocaleString());
+        costLabel.textContent = parts.join(' + ');
+      }
+
+      // Update support status in gap section
+      const statusEl = document.getElementById('support-status');
+      const statusLabel = document.getElementById('support-status-label');
+      statusEl.textContent = total.toLocaleString() + ' / ' + gap.toLocaleString();
+      if (total >= gap) {
+        statusEl.className = 'text-xs font-medium text-green-600';
+        statusLabel.textContent = '✅ Gap closed';
+        statusLabel.className = 'text-xs text-green-600';
+      } else if (total > 0) {
+        statusEl.className = 'text-xs font-medium text-blue-600';
+        statusLabel.textContent = remaining.toLocaleString() + ' pairs still needed';
+        statusLabel.className = 'text-xs text-blue-600';
+      } else {
+        statusEl.className = 'text-xs font-medium text-gray-400';
+        statusLabel.textContent = 'Select options below';
+        statusLabel.className = 'text-xs text-gray-400';
+      }
+
+      // Update gap bar
+      const pct = Math.min(100, (total / gap) * 100);
+      document.getElementById('gap-bar').style.width = pct + '%';
+      document.getElementById('gap-bar').className = total >= gap
+        ? 'bg-green-500 h-2 rounded-full progress-bar'
+        : 'bg-blue-500 h-2 rounded-full progress-bar';
+
+      // Update breakdown table
+      updateBreakdown(opt1, opt2, opt3, opt3Cost, opt4, opt4Cost, wipRepackCost, totalRepackCost);
+
+      // Update strategy-specific impact analysis
+      updateStrategyImpact();
+
+      // Update option cards and allocation matrix
+      renderOptionCards();
+      renderAllocationMatrix();
+
+      // Enable/disable confirm button
+      document.getElementById('confirm-btn').disabled = total === 0;
+    }
+
+    function updateBreakdown(opt1, opt2, opt3, opt3Cost, opt4, opt4Cost, wipRepackCost, totalRepackCost) {
+      const tbody = document.getElementById('breakdown-body');
+      const rows = [];
+
+      // Calculate ETA dates
+      const today = new Date();
+      const week1Date = new Date(today);
+      week1Date.setDate(today.getDate() + 7);
+      const week2Date = new Date(today);
+      week2Date.setDate(today.getDate() + 14);
+      const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const etaW1 = fmt(week1Date) + ' <span class="text-xs text-green-600">(W1)</span>';
+      const etaW2 = fmt(week2Date) + ' <span class="text-xs text-blue-600">(W2)</span>';
+
+      if (opt1 > 0) {
+        rows.push(`
+          <tr class="scenario-row">
+            <td class="px-3 py-2.5"><span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">Opt 1</span></td>
+            <td class="px-3 py-2.5 text-gray-600">C-order FG</td>
+            <td class="px-3 py-2.5 text-right font-bold">${opt1.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
+            <td class="px-3 py-2.5 text-gray-600"></td>
+          </tr>
+        `);
+      }
+      if (opt2 > 0) {
+        rows.push(`
+          <tr class="scenario-row">
+            <td class="px-3 py-2.5"><span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Opt 2</span></td>
+            <td class="px-3 py-2.5 text-gray-600">Preload FG</td>
+            <td class="px-3 py-2.5 text-right font-bold">${opt2.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
+            <td class="px-3 py-2.5 text-gray-600"></td>
+          </tr>
+        `);
+      }
+      if (opt3 > 0) {
+        rows.push(`
+          <tr class="scenario-row">
+            <td class="px-3 py-2.5"><span class="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full">Opt 3</span></td>
+            <td class="px-3 py-2.5 text-gray-600">Same Region PO FG Re-route</td>
+            <td class="px-3 py-2.5 text-right font-bold">${opt3.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
+            <td class="px-3 py-2.5 text-gray-600">${opt3Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO ETA will be impacted; Updated ETA calculated by Project Type.'}</td>
+          </tr>
+        `);
+      }
+      if (opt4 > 0) {
+        rows.push(`
+          <tr class="scenario-row">
+            <td class="px-3 py-2.5"><span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full">Opt 4</span></td>
+            <td class="px-3 py-2.5 text-gray-600">Cross-Region PO FG Re-route</td>
+            <td class="px-3 py-2.5 text-right font-bold">${opt4.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
+            <td class="px-3 py-2.5 text-gray-600">${opt4Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO ETA will be impacted; Updated ETA calculated by Project Type.'}</td>
+          </tr>
+        `);
+      }
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `
+          <tr id="breakdown-empty">
+            <td colspan="6" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = rows.join('');
+      }
+    }
+
+    function updateStrategyImpact() {
+      const section = document.getElementById('strategy-impact-section');
+      const body = document.getElementById('strategy-impact-body');
+      if (!section || !body) return;
+
+      const poCount = (sources) => new Set(sources.map(s => s.sourcePO)).size;
+      const totalPairs = (sources) => sources.reduce((sum, s) => sum + (s.originalQty || s.qty || 0), 0);
+      const maxDelayDays = (sources) => {
+        let max = 0;
+        sources.forEach(s => {
+          if (s.impactedEta && s.xfDate) {
+            const diff = Math.round((new Date(s.impactedEta) - new Date(s.xfDate)) / (1000 * 60 * 60 * 24));
+            if (diff > max) max = diff;
+          }
+        });
+        return max;
+      };
+
+      const cards = [];
+      const opt3Checked = document.getElementById('opt3-check').checked;
+      const opt4Checked = document.getElementById('opt4-check').checked;
+
+      if (opt3Checked) {
+        const strategy = opt3Strategy;
+        const type = 'same-region';
+        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
+        const po = poCount(sources);
+        const pairs = totalPairs(sources);
+        const delay = strategy === 'strategy1' ? 0 : maxDelayDays(sources);
+        const text = strategy === 'strategy1'
+          ? '策略1：仅借用同区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
+          : '策略2：这些源 PO 的交期将受影响，已按 Project Type 计算 Updated ETA。';
+        cards.push(`
+          <div class="bg-teal-50 border border-teal-200 rounded-lg p-3">
+            <div class="text-xs font-semibold text-teal-800 mb-1">Option 3 — Same Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
+            <div class="text-sm text-teal-700">${text}</div>
+            <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
+              <div class="bg-white rounded border border-teal-100 p-2">
+                <div class="text-gray-500">Source POs</div>
+                <div class="font-bold text-teal-800">${po.toLocaleString()}</div>
+              </div>
+              <div class="bg-white rounded border border-teal-100 p-2">
+                <div class="text-gray-500">受影响 Pairs</div>
+                <div class="font-bold text-teal-800">${pairs.toLocaleString()}</div>
+              </div>
+              <div class="bg-white rounded border border-teal-100 p-2">
+                <div class="text-gray-500">最长交期延误</div>
+                <div class="font-bold text-teal-800">${delay.toLocaleString()} 天</div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <button type="button" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-teal-700 hover:text-teal-900 underline">View ${sources.length.toLocaleString()} source PO(s)</button>
+            </div>
+          </div>
+        `);
+      }
+
+      if (opt4Checked) {
+        const strategy = opt4Strategy;
+        const type = 'cross-region';
+        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
+        const po = poCount(sources);
+        const pairs = totalPairs(sources);
+        const delay = strategy === 'strategy1' ? 0 : maxDelayDays(sources);
+        const text = strategy === 'strategy1'
+          ? '策略1：仅借用跨区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
+          : '策略2：这些源 PO 的交期将受影响，已按 Project Type 计算 Updated ETA。';
+        cards.push(`
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <div class="text-xs font-semibold text-orange-800 mb-1">Option 4 — Cross-Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
+            <div class="text-sm text-orange-700">${text}</div>
+            <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
+              <div class="bg-white rounded border border-orange-100 p-2">
+                <div class="text-gray-500">Source POs</div>
+                <div class="font-bold text-orange-800">${po.toLocaleString()}</div>
+              </div>
+              <div class="bg-white rounded border border-orange-100 p-2">
+                <div class="text-gray-500">受影响 Pairs</div>
+                <div class="font-bold text-orange-800">${pairs.toLocaleString()}</div>
+              </div>
+              <div class="bg-white rounded border border-orange-100 p-2">
+                <div class="text-gray-500">最长交期延误</div>
+                <div class="font-bold text-orange-800">${delay.toLocaleString()} 天</div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <button type="button" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-orange-700 hover:text-orange-900 underline">View ${sources.length.toLocaleString()} source PO(s)</button>
+            </div>
+          </div>
+        `);
+      }
+
+      if (cards.length === 0) {
+        section.classList.add('hidden');
+      } else {
+        section.classList.remove('hidden');
+        body.innerHTML = cards.join('');
+      }
+    }
+
+    // ===== Reset =====
+    function resetScenario() {
+      ['opt1', 'opt2', 'opt3', 'opt4'].forEach(opt => {
+        const check = document.getElementById(opt + '-check');
+        if (check) check.checked = false;
+        const card = document.getElementById(opt + '-card');
+        if (card) card.classList.remove('selected');
+        const impact = document.getElementById(opt + '-impact');
+        if (impact) impact.classList.add('hidden');
+      });
+      resetAllocations();
+      selectedOpt3 = [];
+      selectedOpt4 = [];
+      recalc();
+    }
+
+    function saveScenario() {
+      saveScheme();
+    }
+
+    // ===== Confirmation Modal =====
+    function openConfirmModal() {
+      const gap = getGap();
+      const total = allocations.reduce((sum, a) => sum + a.qty, 0);
+
+      document.getElementById('modal-gap').textContent = gap.toLocaleString() + ' pairs';
+      document.getElementById('modal-total-support').textContent = total.toLocaleString() + ' pairs';
+
+      const sourceLabels = {
+        'c-order': 'C-order FG pool',
+        'preload': 'Preload FG pool',
+        'same-region': (src) => `Same-region PO (${src.sourcePO})`,
+        'cross-region': (src) => `Cross-region ${src.region} PO (${src.sourcePO})`
+      };
+
+      const actionRows = [];
+      let idx = 1;
+      allocations.forEach(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        const t = targetItems.find(x => x.id === a.targetId);
+        if (!src || !t) return;
+        const label = typeof sourceLabels[src.sourceType] === 'function'
+          ? sourceLabels[src.sourceType](src)
+          : sourceLabels[src.sourceType];
+        actionRows.push(`
+          <tr>
+            <td class="px-3 py-2.5 text-gray-500">${idx++}</td>
+            <td class="px-3 py-2.5 font-medium text-gray-900">${t.po}</td>
+            <td class="px-3 py-2.5 text-gray-600">${t.style}</td>
+            <td class="px-3 py-2.5 text-gray-600">${t.color}</td>
+            <td class="px-3 py-2.5 text-gray-600">${t.size}</td>
+            <td class="px-3 py-2.5 text-gray-600">${label}</td>
+            <td class="px-3 py-2.5 text-right font-medium text-gray-900">${a.qty.toLocaleString()}</td>
+          </tr>
+        `);
+      });
+
+      document.getElementById('action-table-body').innerHTML = actionRows.join('') || '<tr><td colspan="7" class="px-3 py-6 text-center text-gray-400 text-sm">No allocations yet.</td></tr>';
+
+      document.getElementById('confirm-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function copyActionList() {
+      const text = document.getElementById('action-table-body').innerText;
+      navigator.clipboard.writeText(text).then(() => alert('Action list copied to clipboard!'));
+    }
+
+    function exportActionList() {
+      const rows = [['#','Target PO','Style','Color','Size','Source','Qty'].join(',')];
+      document.querySelectorAll('#action-table-body tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('td')).map(td => '"' + td.textContent.trim().replace(/"/g, '""') + '"');
+        rows.push(cells.join(','));
+      });
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'PullForward_Action_List_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Close region dropdown when clicking outside
+    // ===== Role & Tab Management =====
+    function switchRole(role) {
+      currentRole = role;
+      updateRoleAndTabUI();
+      // If on a tab not available in this role, switch to schemes
+      const cptTabs = ['execution'];
+      const sptTabs = ['detail', 'result'];
+      if (role === 'cpt' && sptTabs.includes(activeTab)) {
+        switchTab('schemes');
+      } else if (role === 'spt' && cptTabs.includes(activeTab)) {
+        switchTab('schemes');
+      }
+      renderSchemeList();
+      if (currentSchemeId) {
+        updateActionButtons();
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tab) {
+          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors';
+        } else {
+          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors';
+        }
+      });
+      if (tab === 'schemes') renderSchemeList();
+      if (tab === 'execution') renderExecutionTab();
+      if (tab === 'result') renderResultTab();
+    }
+
+    function updateRoleAndTabUI() {
+      // Role switcher hidden; all tabs visible to all users
+      const detailTab = document.querySelector('.tab-btn[data-tab="detail"]');
+      const resultTab = document.querySelector('.tab-btn[data-tab="result"]');
+      const executionTab = document.querySelector('.tab-btn[data-tab="execution"]');
+      if (detailTab) detailTab.classList.remove('hidden');
+      if (resultTab) resultTab.classList.remove('hidden');
+      if (executionTab) executionTab.classList.remove('hidden');
+    }
+
+    // ===== Scheme CRUD =====
+    function createNewScheme() {
+      const scheme = createNewSchemeData();
+      schemes.push(scheme);
+      currentSchemeId = scheme.id;
+      loadSchemeIntoUI(scheme);
+      switchTab('detail');
+    }
+
+    function createNewSchemeData() {
+      return {
+        id: generateSchemeId(),
+        name: '',
+        createdAt: new Date().toISOString().slice(0, 10),
+        status: 'Draft',
+        notes: '',
+        entryMode: 'po',
+        poList: 'PO#2026EM12345, PO#2026EM12346, PO#2026EM12347',
+        targetRegion: 'EMEA',
+        xfFrom: '2026-08-01',
+        xfTo: '2026-10-31',
+        requestXfDate: '',
+        decisionMode: 'immediate',
+        deferredDays: 0,
+        totalDemand: TOTAL_DEMAND,
+        ownPoFg: OWN_PO_FG_NOW,
+        gap: TOTAL_DEMAND - OWN_PO_FG_NOW,
+        options: {
+          opt1: { selected: false, qty: 0 },
+          opt2: { selected: false, qty: 0 },
+          opt3: { selected: false, items: [] },
+          opt4: { selected: false, items: [] }
+        },
+        allocations: [],
+        execution: {
+          actuals: { opt1: 0, opt2: 0, opt3: 0, opt4: 0 },
+          feedback: ''
+        },
+        resultFeedbackToRegion: ''
+      };
+    }
+
+    function editScheme(id) {
+      const scheme = schemes.find(s => s.id === id);
+      if (!scheme) return;
+      currentSchemeId = id;
+      loadSchemeIntoUI(scheme);
+      switchRole('spt');
+      switchTab('detail');
+    }
+
+    function viewExecutionScheme(id) {
+      const scheme = schemes.find(s => s.id === id);
+      if (!scheme) return;
+      currentSchemeId = id;
+      switchRole('cpt');
+      switchTab('execution');
+    }
+
+    function viewResultScheme(id) {
+      const scheme = schemes.find(s => s.id === id);
+      if (!scheme) return;
+      currentSchemeId = id;
+      switchRole('spt');
+      switchTab('result');
+    }
+
+    function loadSchemeIntoUI(scheme) {
+      // Set globals
+      entryMode = scheme.entryMode;
+      decisionMode = scheme.decisionMode;
+      deferredDays = scheme.deferredDays || 0;
+      selectedOpt3 = (scheme.options.opt3.items || []).map(i => ({...i}));
+      selectedOpt4 = (scheme.options.opt4.items || []).map(i => ({...i}));
+
+      // Basic fields
+      document.getElementById('scheme-name-input').value = scheme.name || '';
+      document.getElementById('scheme-notes-input').value = scheme.notes || '';
+      document.getElementById('scheme-status-display').textContent = scheme.status;
+      document.getElementById('scheme-id-display').textContent = scheme.id;
+
+      document.getElementById('po-list-input').value = scheme.poList || '';
+      document.getElementById('style-input').value = scheme.entryMode === 'style' ? (scheme.styleInput || '') : '';
+      document.getElementById('qty-style-input').value = scheme.entryMode === 'qty' ? (scheme.qtyStyleInput || '') : '';
+      document.getElementById('qty-input').value = scheme.qtyInput || '';
+      document.getElementById('style-qty-input').value = scheme.styleQtyInput || '';
+      document.getElementById('xf-from').value = scheme.xfFrom || '2026-08-01';
+      document.getElementById('xf-to').value = scheme.xfTo || '2026-10-31';
+      document.getElementById('request-xf-date').value = scheme.requestXfDate || '';
+
+      // Region
+      document.getElementById('target-region').value = scheme.targetRegion || 'EMEA';
+      document.querySelectorAll('.region-checkbox').forEach(cb => {
+        cb.checked = (scheme.targetRegion || '').split(',').includes(cb.value);
+      });
+      document.getElementById('target-region-display').textContent = scheme.targetRegion || 'Select regions...';
+
+      // Entry mode
+      switchEntryMode(scheme.entryMode);
+
+      // Decision mode
+      switchDecisionMode(scheme.decisionMode);
+      if (scheme.decisionMode === 'deferred' && scheme.deferredDays > 0) {
+        selectDeferredDays(scheme.deferredDays);
+      }
+
+      // Generate target items and sources
+      renderDemandPOStatus();
+      updateTargetCountsFromItems();
+      generateInventorySources();
+      resetAllocations();
+
+      // Restore allocations if saved
+      if (scheme.allocations && Array.isArray(scheme.allocations)) {
+        allocations = scheme.allocations.map(a => ({...a}));
+      }
+
+      // Show dashboard sections
+      document.getElementById('gap-section').classList.remove('hidden');
+      document.getElementById('po-status-section').classList.remove('hidden');
+      // decision-mode-panel hidden by default; logic preserved below
+      document.getElementById('options-section').classList.remove('hidden');
+      document.getElementById('allocation-section').classList.remove('hidden');
+      document.getElementById('summary-section').classList.remove('hidden');
+
+      // Apply scheme option checkboxes
+      document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+      document.querySelectorAll('[id$="-impact"]').forEach(el => el.classList.add('hidden'));
+      ['opt1', 'opt2', 'opt3', 'opt4'].forEach((opt, i) => {
+        const check = document.getElementById(opt + '-check');
+        const selected = scheme.options[opt] && scheme.options[opt].selected;
+        check.checked = !!selected;
+        if (selected) {
+          document.getElementById(opt + '-card').classList.add('selected');
+          const impact = document.getElementById(opt + '-impact');
+          if (impact) impact.classList.remove('hidden');
+        }
+      });
+
+      // Load execution inputs if any
+      document.getElementById('execution-feedback').value = scheme.execution?.feedback || '';
+      document.getElementById('result-feedback-to-region').value = scheme.resultFeedbackToRegion || '';
+
+      // Update UI
+      updateGapDisplay();
+      updateTargetMetrics();
+      renderOptionCards();
+      renderAllocationMatrix();
+      recalc();
+      updateActionButtons();
+      updateReadOnlyState();
+    }
+
+    function saveUItoScheme() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+
+      scheme.name = document.getElementById('scheme-name-input').value.trim() || scheme.id;
+      scheme.notes = document.getElementById('scheme-notes-input').value.trim();
+      scheme.entryMode = entryMode;
+      scheme.poList = document.getElementById('po-list-input').value;
+      scheme.styleInput = document.getElementById('style-input').value;
+      scheme.qtyStyleInput = document.getElementById('qty-style-input').value;
+      scheme.qtyInput = document.getElementById('qty-input').value;
+      scheme.styleQtyInput = document.getElementById('style-qty-input').value;
+      scheme.targetRegion = document.getElementById('target-region').value;
+      scheme.xfFrom = document.getElementById('xf-from').value;
+      scheme.xfTo = document.getElementById('xf-to').value;
+      scheme.requestXfDate = document.getElementById('request-xf-date').value;
+      scheme.decisionMode = decisionMode;
+      scheme.deferredDays = deferredDays;
+      scheme.totalDemand = TOTAL_DEMAND;
+      scheme.ownPoFg = OWN_PO_FG_NOW;
+      scheme.gap = getGap();
+
+      // Build option summaries from allocations for execution/result tabs
+      const buildItems = (type) => allocations.filter(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        return src && src.sourceType === type;
+      }).map(a => {
+        const src = inventorySources.find(s => s.id === a.sourceId);
+        const t = targetItems.find(x => x.id === a.targetId);
+        return {
+          qty: a.qty,
+          fee: src.fee,
+          region: src.region,
+          po: src.sourcePO,
+          xfDate: src.xfDate,
+          targetPO: t ? t.po : ''
+        };
+      });
+
+      scheme.options.opt1 = {
+        selected: document.getElementById('opt1-check').checked,
+        qty: getTotalAllocatedByType('c-order')
+      };
+      scheme.options.opt2 = {
+        selected: document.getElementById('opt2-check').checked,
+        qty: getTotalAllocatedByType('preload')
+      };
+      scheme.options.opt3 = {
+        selected: document.getElementById('opt3-check').checked,
+        qty: getTotalAllocatedByType('same-region'),
+        items: buildItems('same-region')
+      };
+      scheme.options.opt4 = {
+        selected: document.getElementById('opt4-check').checked,
+        qty: getTotalAllocatedByType('cross-region'),
+        items: buildItems('cross-region')
+      };
+
+      // Save PO-level allocation plan
+      scheme.allocations = allocations.map(a => ({...a}));
+
+      // Update gap display values
+      scheme.totalDemand = TOTAL_DEMAND;
+      scheme.ownPoFg = OWN_PO_FG_NOW;
+      scheme.gap = getGap();
+    }
+
+    function renderSchemeList() {
+      const tbody = document.getElementById('scheme-list-body');
+      const empty = document.getElementById('scheme-list-empty');
+      const filter = document.getElementById('scheme-status-filter').value;
+
+      let displaySchemes = schemes;
+      if (filter !== 'all') {
+        displaySchemes = schemes.filter(s => s.status === filter);
+      }
+
+      // CPT only sees Ready for CPT / In Execution / Completed
+      if (currentRole === 'cpt') {
+        displaySchemes = displaySchemes.filter(s => ['Ready for CPT', 'In Execution', 'Completed'].includes(s.status));
+      }
+
+      if (displaySchemes.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      tbody.innerHTML = displaySchemes.map(s => {
+        const primaryRegion = (s.targetRegion || 'EMEA').split(',')[0];
+        const actions = [];
+        if (currentRole === 'spt') {
+          actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">Edit</button>`);
+          if (s.status === 'Completed') {
+            actions.push(`<button onclick="viewResultScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View Result</button>`);
+          }
+        } else {
+          if (['Ready for CPT', 'In Execution'].includes(s.status)) {
+            actions.push(`<button onclick="viewExecutionScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Execute</button>`);
+          } else if (s.status === 'Completed') {
+            actions.push(`<button onclick="viewExecutionScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View</button>`);
+          }
+        }
+
+        return `
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-3 text-xs text-gray-500">${s.id}</td>
+            <td class="px-4 py-3 font-medium text-gray-900">${s.name || '(Untitled)'}</td>
+            <td class="px-4 py-3 text-gray-600">${primaryRegion}</td>
+            <td class="px-4 py-3 text-right font-medium text-gray-900">${(s.gap || 0).toLocaleString()}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(s.status)}">${s.status}</span></td>
+            <td class="px-4 py-3 text-xs text-gray-500">${s.createdAt}</td>
+            <td class="px-4 py-3">${actions.join('')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateActionButtons() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+
+      const container = document.getElementById('scheme-action-buttons');
+      if (!container) return;
+
+      const needsCoordination = scheme.options.opt3.selected || scheme.options.opt4.selected;
+      let buttons = '';
+
+      if (currentRole === 'spt') {
+        if (scheme.status === 'Draft') {
+          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>`;
+          if (needsCoordination) {
+            buttons += `<button onclick="markCoordinationComplete()" class="px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg btn-action flex items-center gap-2 mr-3">Mark Coordination Complete</button>`;
+          } else {
+            buttons += `<button onclick="submitToCPT()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">Submit to CPT</button>`;
+          }
+        } else if (scheme.status === 'Pending Coordination') {
+          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>`;
+          buttons += `<button onclick="submitToCPT()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">Submit to CPT</button>`;
+        } else if (scheme.status === 'Ready for CPT' || scheme.status === 'In Execution') {
+          buttons += `<span class="text-sm text-blue-600 font-medium mr-3">Submitted to CPT</span>`;
+          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Save Changes</button>`;
+        } else if (scheme.status === 'Completed') {
+          buttons += `<button onclick="viewResultScheme('${scheme.id}')" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">View Result</button>`;
+        } else if (scheme.status === 'Closed') {
+          buttons += `<span class="text-sm text-gray-500 font-medium">Scheme closed</span>`;
+        }
+      } else {
+        // CPT view
+        if (['Ready for CPT', 'In Execution'].includes(scheme.status)) {
+          buttons += `<button onclick="switchTab('execution')" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">Go to Execution</button>`;
+        } else if (scheme.status === 'Completed') {
+          buttons += `<span class="text-sm text-green-600 font-medium">Execution completed</span>`;
+        }
+      }
+
+      container.innerHTML = buttons;
+    }
+
+    function updateReadOnlyState() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+      const isReadOnly = ['Ready for CPT', 'In Execution', 'Completed', 'Closed'].includes(scheme.status) && currentRole === 'spt';
+      // In MVP we keep inputs editable but warn via status; CPT can view all tabs
+    }
+
+    // ===== Status Workflow =====
+    function saveScheme() {
+      saveUItoScheme();
+      const scheme = getCurrentScheme();
+      if (scheme) {
+        document.getElementById('scheme-status-display').textContent = scheme.status;
+        alert(`Scheme "${scheme.name || scheme.id}" saved.`);
+        renderSchemeList();
+      }
+    }
+
+    function markCoordinationComplete() {
+      saveUItoScheme();
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+      scheme.status = 'Pending Coordination';
+      document.getElementById('scheme-status-display').textContent = scheme.status;
+      updateActionButtons();
+      renderSchemeList();
+      alert('Coordination marked as complete. You can now submit to CPT.');
+    }
+
+    function submitToCPT() {
+      saveUItoScheme();
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+      const planned = getOptionQuantities(scheme);
+      const externalTotal = planned.opt1 + planned.opt2 + planned.opt3 + planned.opt4;
+      if (externalTotal === 0) {
+        alert('Please select at least one option with quantity before submitting.');
+        return;
+      }
+      const needsCoordination = scheme.options.opt3.selected || scheme.options.opt4.selected;
+      if (needsCoordination && scheme.status === 'Draft') {
+        alert('This scheme requires coordination first. Please mark coordination as complete.');
+        return;
+      }
+      scheme.status = 'Ready for CPT';
+      document.getElementById('scheme-status-display').textContent = scheme.status;
+      updateActionButtons();
+      renderSchemeList();
+      alert('Scheme submitted to CPT.');
+    }
+
+    function startExecution() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+      if (scheme.status === 'Ready for CPT') {
+        scheme.status = 'In Execution';
+        renderSchemeList();
+      }
+    }
+
+    function closeScheme() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+      scheme.resultFeedbackToRegion = document.getElementById('result-feedback-to-region').value.trim();
+      scheme.status = 'Closed';
+      renderSchemeList();
+      alert('Scheme closed. Result has been recorded.');
+      switchTab('schemes');
+    }
+
+    // ===== Execution & Result =====
+    function renderExecutionTab() {
+      const scheme = getCurrentScheme();
+      const empty = document.getElementById('execution-empty');
+      const content = document.getElementById('execution-content');
+      const badge = document.getElementById('execution-scheme-badge');
+
+      if (!scheme || !['Ready for CPT', 'In Execution', 'Completed'].includes(scheme.status)) {
+        empty.classList.remove('hidden');
+        content.classList.add('hidden');
+        badge.textContent = 'No scheme selected';
+        return;
+      }
+
+      empty.classList.add('hidden');
+      content.classList.remove('hidden');
+      badge.textContent = scheme.id;
+
+      document.getElementById('execution-scheme-name').textContent = scheme.name || scheme.id;
+      document.getElementById('execution-scheme-meta').textContent = `${scheme.id} · ${(scheme.targetRegion || 'EMEA').split(',')[0]} · ${scheme.createdAt}`;
+      document.getElementById('execution-gap').textContent = (scheme.gap || 0).toLocaleString();
+      document.getElementById('execution-status').textContent = scheme.status;
+
+      const planned = getOptionQuantities(scheme);
+      const plannedTotal = planned.opt1 + planned.opt2 + planned.opt3 + planned.opt4;
+      document.getElementById('execution-planned').textContent = plannedTotal.toLocaleString();
+
+      const actuals = scheme.execution?.actuals || { opt1: 0, opt2: 0, opt3: 0, opt4: 0 };
+      document.getElementById('execution-feedback').value = scheme.execution?.feedback || '';
+
+      const optionLabels = {
+        opt1: 'C-order FG',
+        opt2: 'Preload FG',
+        opt3: 'Same Region PO FG Re-route',
+        opt4: 'Cross-Region PO FG Re-route'
+      };
+
+      const rows = ['opt1', 'opt2', 'opt3', 'opt4'].map(key => {
+        const p = planned[key];
+        if (p === 0) return '';
+        const a = actuals[key] || 0;
+        const rate = p > 0 ? Math.round((a / p) * 100) : 0;
+        return `
+          <tr>
+            <td class="px-3 py-2.5 text-gray-900 font-medium">${optionLabels[key]}</td>
+            <td class="px-3 py-2.5 text-right">${p.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right">
+              <input type="number" data-opt="${key}" value="${a}" min="0" max="${p}" step="100" class="execution-actual w-24 px-2 py-1 text-right border border-gray-300 rounded-lg text-sm">
+            </td>
+            <td class="px-3 py-2.5 text-right font-medium ${rate >= 100 ? 'text-green-600' : rate >= 70 ? 'text-yellow-600' : 'text-red-600'}">${rate}%</td>
+            <td class="px-3 py-2.5">
+              <input type="text" data-opt="${key}" value="" placeholder="Factory feedback" class="execution-feedback-line w-full px-2 py-1 border border-gray-300 rounded-lg text-sm">
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('execution-table-body').innerHTML = rows || '<tr><td colspan="5" class="px-3 py-6 text-center text-gray-400">No options selected in this scheme.</td></tr>';
+
+      // PO Pull-in table
+      const poRows = [];
+      (scheme.options.opt3.items || []).forEach((item, idx) => {
+        const confirmed = item.confirmedXfDate || '';
+        const pullInDays = calculatePullInDays(item.xfDate, confirmed);
+        poRows.push(renderPullInRow(item, 'Same Region', 'opt3', idx, confirmed, pullInDays));
+      });
+      (scheme.options.opt4.items || []).forEach((item, idx) => {
+        const confirmed = item.confirmedXfDate || '';
+        const pullInDays = calculatePullInDays(item.xfDate, confirmed);
+        poRows.push(renderPullInRow(item, 'Cross-Region', 'opt4', idx, confirmed, pullInDays));
+      });
+
+      document.getElementById('execution-po-pullin-body').innerHTML = poRows.length
+        ? poRows.join('')
+        : '<tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">No PO re-route selected in this scheme.</td></tr>';
+    }
+
+    function renderPullInRow(item, optionLabel, optKey, idx, confirmed, pullInDays) {
+      const statusClass = confirmed ? 'text-green-600' : 'text-gray-400';
+      const statusText = confirmed ? 'Confirmed' : 'Pending';
+      const pullInText = pullInDays > 0 ? `${pullInDays} days` : (confirmed ? '0 days' : '-');
+      return `
+        <tr>
+          <td class="px-3 py-2.5 font-medium text-gray-900">${item.po}</td>
+          <td class="px-3 py-2.5 text-gray-600">${item.region}</td>
+          <td class="px-3 py-2.5 text-gray-600">${optionLabel}</td>
+          <td class="px-3 py-2.5 text-gray-600">${formatDisplayDate(item.xfDate)}</td>
+          <td class="px-3 py-2.5">
+            <input type="date" data-opt="${optKey}" data-idx="${idx}" value="${confirmed}" class="execution-confirmed-xf w-36 px-2 py-1 border border-gray-300 rounded-lg text-sm">
+          </td>
+          <td class="px-3 py-2.5 text-right font-medium ${pullInDays > 0 ? 'text-green-600' : 'text-gray-500'}">${pullInText}</td>
+          <td class="px-3 py-2.5 text-xs font-medium ${statusClass}">${statusText}</td>
+        </tr>
+      `;
+    }
+
+    function calculatePullInDays(originalDate, confirmedDate) {
+      if (!originalDate || !confirmedDate) return 0;
+      const orig = new Date(originalDate);
+      const conf = new Date(confirmedDate);
+      if (isNaN(orig.getTime()) || isNaN(conf.getTime())) return 0;
+      const diff = orig - conf;
+      return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function getOptionQuantities(scheme) {
+      return {
+        opt1: scheme.options?.opt1?.qty || 0,
+        opt2: scheme.options?.opt2?.qty || 0,
+        opt3: scheme.options?.opt3?.qty || (scheme.options?.opt3?.items || []).reduce((sum, i) => sum + (i.qty || 0), 0),
+        opt4: scheme.options?.opt4?.qty || (scheme.options?.opt4?.items || []).reduce((sum, i) => sum + (i.qty || 0), 0)
+      };
+    }
+
+    function saveExecutionResult() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+
+      const actuals = { opt1: 0, opt2: 0, opt3: 0, opt4: 0 };
+      document.querySelectorAll('.execution-actual').forEach(input => {
+        const key = input.dataset.opt;
+        actuals[key] = parseInt(input.value) || 0;
+      });
+
+      const feedbackLines = [];
+      document.querySelectorAll('.execution-feedback-line').forEach(input => {
+        if (input.value.trim()) {
+          const key = input.dataset.opt;
+          feedbackLines.push(`${key}: ${input.value.trim()}`);
+        }
+      });
+
+      // Save confirmed XF dates for PO pull-ins
+      document.querySelectorAll('.execution-confirmed-xf').forEach(input => {
+        const optKey = input.dataset.opt;
+        const idx = parseInt(input.dataset.idx);
+        const confirmed = input.value;
+        if (scheme.options[optKey] && scheme.options[optKey].items && scheme.options[optKey].items[idx]) {
+          scheme.options[optKey].items[idx].confirmedXfDate = confirmed;
+        }
+      });
+
+      scheme.execution = {
+        actuals: actuals,
+        feedback: document.getElementById('execution-feedback').value.trim() + (feedbackLines.length ? ' | ' + feedbackLines.join('; ') : '')
+      };
+      scheme.status = 'Completed';
+      renderSchemeList();
+      alert('Execution result saved. SPT can now view the result.');
+      switchTab('schemes');
+    }
+
+    function renderResultTab() {
+      const scheme = getCurrentScheme();
+      const empty = document.getElementById('result-empty');
+      const content = document.getElementById('result-content');
+      const badge = document.getElementById('result-scheme-badge');
+
+      if (!scheme || !['Completed', 'Closed'].includes(scheme.status)) {
+        empty.classList.remove('hidden');
+        content.classList.add('hidden');
+        badge.textContent = 'No scheme selected';
+        return;
+      }
+
+      empty.classList.add('hidden');
+      content.classList.remove('hidden');
+      badge.textContent = scheme.id;
+
+      document.getElementById('result-scheme-name').textContent = scheme.name || scheme.id;
+      document.getElementById('result-scheme-meta').textContent = `${scheme.id} · ${(scheme.targetRegion || 'EMEA').split(',')[0]} · ${scheme.createdAt}`;
+      document.getElementById('result-feedback-to-region').value = scheme.resultFeedbackToRegion || '';
+      document.getElementById('result-feedback-to-region').disabled = scheme.status === 'Closed';
+      document.getElementById('result-close-section').classList.toggle('hidden', scheme.status === 'Closed');
+
+      const planned = getOptionQuantities(scheme);
+      const actuals = scheme.execution?.actuals || { opt1: 0, opt2: 0, opt3: 0, opt4: 0 };
+      const plannedTotal = planned.opt1 + planned.opt2 + planned.opt3 + planned.opt4;
+      const actualTotal = actuals.opt1 + actuals.opt2 + actuals.opt3 + actuals.opt4;
+      const remaining = Math.max(0, (scheme.gap || 0) - actualTotal);
+      const overallRate = plannedTotal > 0 ? Math.round((actualTotal / plannedTotal) * 100) : 0;
+
+      document.getElementById('result-gap').textContent = (scheme.gap || 0).toLocaleString();
+      document.getElementById('result-planned').textContent = plannedTotal.toLocaleString();
+      document.getElementById('result-actual').textContent = actualTotal.toLocaleString();
+      document.getElementById('result-remaining').textContent = remaining.toLocaleString();
+      document.getElementById('result-match-rate').textContent = overallRate + '%';
+      document.getElementById('result-match-rate').className = 'text-3xl font-bold ' + (overallRate >= 100 ? 'text-green-600' : overallRate >= 70 ? 'text-yellow-600' : 'text-red-600');
+
+      const optionLabels = {
+        opt1: 'C-order FG',
+        opt2: 'Preload FG',
+        opt3: 'Same Region PO FG Re-route',
+        opt4: 'Cross-Region PO FG Re-route'
+      };
+
+      document.getElementById('result-table-body').innerHTML = ['opt1', 'opt2', 'opt3', 'opt4'].map(key => {
+        const p = planned[key];
+        if (p === 0) return '';
+        const a = actuals[key] || 0;
+        const rate = p > 0 ? Math.round((a / p) * 100) : 0;
+        return `
+          <tr>
+            <td class="px-3 py-2.5 text-gray-900 font-medium">${optionLabels[key]}</td>
+            <td class="px-3 py-2.5 text-right">${p.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right">${a.toLocaleString()}</td>
+            <td class="px-3 py-2.5 text-right font-medium ${rate >= 100 ? 'text-green-600' : rate >= 70 ? 'text-yellow-600' : 'text-red-600'}">${rate}%</td>
+            <td class="px-3 py-2.5 text-gray-600 text-xs">-</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Pull-in result
+      const pullInPOs = [];
+      (scheme.options.opt3.items || []).forEach(item => {
+        const days = calculatePullInDays(item.xfDate, item.confirmedXfDate);
+        pullInPOs.push({ ...item, option: 'Same Region', days, confirmed: !!item.confirmedXfDate });
+      });
+      (scheme.options.opt4.items || []).forEach(item => {
+        const days = calculatePullInDays(item.xfDate, item.confirmedXfDate);
+        pullInPOs.push({ ...item, option: 'Cross-Region', days, confirmed: !!item.confirmedXfDate });
+      });
+
+      const totalPOs = pullInPOs.length;
+      const confirmedPOs = pullInPOs.filter(p => p.confirmed).length;
+      const totalPullInDays = pullInPOs.reduce((sum, p) => sum + p.days, 0);
+      const avgPullInDays = confirmedPOs > 0 ? Math.round(totalPullInDays / confirmedPOs) : 0;
+      const successRate = totalPOs > 0 ? Math.round((confirmedPOs / totalPOs) * 100) : 0;
+
+      document.getElementById('result-po-count').textContent = totalPOs;
+      document.getElementById('result-confirmed-po-count').textContent = confirmedPOs;
+      document.getElementById('result-total-pullin').textContent = totalPullInDays;
+      document.getElementById('result-avg-pullin').textContent = avgPullInDays;
+      const successEl = document.getElementById('result-pullin-success');
+      successEl.textContent = successRate + '%';
+      successEl.className = 'text-xl font-bold ' + (successRate >= 100 ? 'text-green-600' : successRate >= 50 ? 'text-yellow-600' : 'text-red-600');
+
+      document.getElementById('result-po-pullin-body').innerHTML = totalPOs
+        ? pullInPOs.map(p => `
+          <tr>
+            <td class="px-3 py-2.5 font-medium text-gray-900">${p.po}</td>
+            <td class="px-3 py-2.5 text-gray-600">${p.region}</td>
+            <td class="px-3 py-2.5 text-gray-600">${p.option}</td>
+            <td class="px-3 py-2.5 text-gray-600">${formatDisplayDate(p.xfDate)}</td>
+            <td class="px-3 py-2.5 text-gray-600">${p.confirmed ? formatDisplayDate(p.confirmedXfDate) : '<span class="text-gray-400">Pending</span>'}</td>
+            <td class="px-3 py-2.5 text-right font-medium ${p.days > 0 ? 'text-green-600' : 'text-gray-500'}">${p.confirmed ? p.days + ' days' : '-'}</td>
+            <td class="px-3 py-2.5 text-xs font-medium ${p.confirmed ? 'text-green-600' : 'text-gray-400'}">${p.confirmed ? 'Confirmed' : 'Pending'}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="7" class="px-3 py-6 text-center text-gray-400">No PO re-route selected in this scheme.</td></tr>';
+    }
+
+    function exportFactoryList() {
+      const scheme = getCurrentScheme();
+      if (!scheme) return;
+
+      const rows = [['Scheme ID','Option','PO#','Region','Planned Qty','Original XF Date','Confirmed XF Date','Factory Contact','Owner','Notes'].join(',')];
+      const optionLabels = {
+        opt1: 'C-order FG',
+        opt2: 'Preload FG',
+        opt3: 'Same Region PO FG Re-route',
+        opt4: 'Cross-Region PO FG Re-route'
+      };
+
+      if (scheme.options.opt1.selected && scheme.options.opt1.qty > 0) {
+        rows.push(`"${scheme.id}","${optionLabels.opt1}","-","-","${scheme.options.opt1.qty}","-","-","lisa.park@deckers.com","CPT","Continuity/Preload FG"`);
+      }
+      if (scheme.options.opt2.selected && scheme.options.opt2.qty > 0) {
+        rows.push(`"${scheme.id}","${optionLabels.opt2}","-","-","${scheme.options.opt2.qty}","-","-","f27.planning@factory.com","Factory F27","Preload FG"`);
+      }
+      (scheme.options.opt3.items || []).forEach(item => {
+        rows.push(`"${scheme.id}","${optionLabels.opt3}","${item.po}","${item.region}","${item.qty}","${item.xfDate || ''}","${item.confirmedXfDate || ''}","jed.wong@deckers.com","Planning","Same Region Re-route"`);
+      });
+      (scheme.options.opt4.items || []).forEach(item => {
+        const regionContacts = { 'US': 'sarah.chen@deckers.com', 'Canada': 'sarah.chen@deckers.com', 'APAC': 'mike.tanaka@deckers.com', 'LATAM': 'ana.garcia@deckers.com' };
+        rows.push(`"${scheme.id}","${optionLabels.opt4}","${item.po}","${item.region}","${item.qty}","${item.xfDate || ''}","${item.confirmedXfDate || ''}","${regionContacts[item.region] || ''}","${item.region} Planning","Cross-Region Re-route"`);
+      });
+
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Factory_List_' + scheme.id + '_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('target-region-dropdown');
+      const btn = document.getElementById('target-region-btn');
+      if (dropdown && !dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // ===== Initialize =====
+    function initApp() {
+      updateRoleAndTabUI();
+      // Sample 1: Draft scheme for SPT to work on
+      const sample1 = createNewSchemeData();
+      sample1.name = 'EMEA July Pull-forward Demo';
+      sample1.status = 'Draft';
+      sample1.gap = sample1.totalDemand - sample1.ownPoFg;
+      schemes.push(sample1);
+
+      // Sample 2: Completed scheme to demonstrate Result tab
+      const sample2 = createNewSchemeData();
+      sample2.id = 'SCH-' + String(Date.now() + 1).slice(-6);
+      sample2.name = 'APAC June Urgent Replenish';
+      sample2.status = 'Completed';
+      sample2.targetRegion = 'APAC';
+      sample2.createdAt = new Date().toISOString().slice(0, 10);
+      sample2.gap = sample2.totalDemand - sample2.ownPoFg;
+      sample2.execution = {
+        actuals: { opt1: 0, opt2: 0, opt3: 0, opt4: 0 },
+        feedback: 'PO-level allocation executed. Factories confirmed pull-in dates.'
+      };
+      sample2.resultFeedbackToRegion = '实际可执行数量待 PO-level allocation 完成后更新。';
+      schemes.push(sample2);
+
+      currentSchemeId = sample1.id;
+      loadSchemeIntoUI(sample1);
+      switchTab('schemes');
+    }
+
+    initApp();
+  </script>
+
+
+  <!-- Source PO Modal -->
+  <div id="source-po-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSourcePOModal()"></div>
+    <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col pointer-events-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 class="font-bold text-gray-900" id="source-po-modal-title">Source POs</h3>
+            <p class="text-xs text-gray-500 mt-0.5" id="source-po-modal-subtitle">Available source POs</p>
+          </div>
+          <button onclick="closeSourcePOModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="p-6 overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr id="source-po-modal-head"></tr>
+            </thead>
+            <tbody id="source-po-modal-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <button onclick="closeSourcePOModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
