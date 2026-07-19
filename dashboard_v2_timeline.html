@@ -24,6 +24,12 @@
     .scenario-row:hover { background-color: #F9FAFB; }
     .tab-panel { animation: slideIn 0.3s ease forwards; }
     .role-btn, .tab-btn { transition: all 0.2s ease; }
+    /* PO-group expandable rows */
+    .group-chevron { display: inline-block; transition: transform 0.15s ease; }
+    .group-chevron.open { transform: rotate(90deg); }
+    tr.po-group-row { cursor: pointer; }
+    tr.size-detail-row td { background-color: #F9FAFB; font-size: 0.8125rem; }
+    tr.size-detail-row:hover td { background-color: #F3F4F6; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -63,27 +69,19 @@
   <!-- Elevator Navigation -->
   <nav id="elevator-nav" class="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-end gap-2">
     <button onclick="scrollToSection('demand-input-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Demand Input</span>
+      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">1</span>Demand Input</span>
       <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
     </button>
     <button onclick="scrollToSection('gap-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Gap Overview</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
-    </button>
-    <button onclick="scrollToSection('po-status-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">PO List</span>
+      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">2</span>Current Status</span>
       <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
     </button>
     <button onclick="scrollToSection('options-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Options</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
-    </button>
-    <button onclick="scrollToSection('allocation-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Allocation Matrix</span>
+      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">3</span>Select Options</span>
       <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
     </button>
     <button onclick="scrollToSection('summary-section')" class="group flex items-center gap-2 text-right">
-      <span class="hidden group-hover:inline text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200">Scenario Summary</span>
+      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">4</span>Scenario Summary</span>
       <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
     </button>
   </nav>
@@ -382,8 +380,13 @@
       </div>
     </div>
 
-    <!-- ===== STEP 2: Gap Overview ===== -->
+    <!-- ===== STEP 2: Current Status ===== -->
     <div id="gap-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-slide-in hidden">
+      <div class="col-span-2 md:col-span-4 flex items-center gap-2">
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+        <h2 class="font-bold text-gray-900">Current Status</h2>
+        <span class="text-sm text-gray-500 ml-2">Selected target POs, total demand and gap to fill</span>
+      </div>
       <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
         <div class="text-xs text-gray-500 mb-1">Selected Target POs / Style-Colors</div>
         <div class="text-2xl font-bold text-gray-900"><span id="target-po-count">1</span> / <span id="target-style-count">1</span></div>
@@ -520,7 +523,7 @@
     <!-- ===== STEP 3: Option Selector ===== -->
     <div id="options-section" class="mb-6 animate-slide-in hidden">
       <div class="flex items-center gap-2 mb-5">
-        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
         <h2 class="font-bold text-gray-900">Select Options to Fill the Gap</h2>
         <span class="text-sm text-gray-500 ml-2">Check one or more options to preview allocation</span>
       </div>
@@ -549,7 +552,15 @@
               <span class="text-sm text-gray-600">Available</span>
               <span class="text-base font-bold text-gray-900" id="opt1-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
-            <div class="flex items-center justify-between text-sm mt-1">
+            <div class="flex items-center justify-between text-xs mt-1">
+              <span class="text-gray-500">├ Reserved for open POs</span>
+              <span class="font-medium text-gray-700" id="opt1-reserved-display">0</span>
+            </div>
+            <div class="flex items-center justify-between text-xs mt-0.5">
+              <span class="text-gray-500">└ Idle (unassigned)</span>
+              <span class="font-medium text-gray-700" id="opt1-idle-display">0</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1 pt-1 border-t border-gray-200">
               <span class="text-gray-500">Allocated</span>
               <span class="font-bold text-blue-700" id="opt1-allocated-display">0</span>
             </div>
@@ -578,7 +589,15 @@
               <span class="text-sm text-gray-600">Available</span>
               <span class="text-base font-bold text-gray-900" id="opt2-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
-            <div class="flex items-center justify-between text-sm mt-1">
+            <div class="flex items-center justify-between text-xs mt-1">
+              <span class="text-gray-500">├ Reserved for open POs</span>
+              <span class="font-medium text-gray-700" id="opt2-reserved-display">0</span>
+            </div>
+            <div class="flex items-center justify-between text-xs mt-0.5">
+              <span class="text-gray-500">└ Idle (unassigned)</span>
+              <span class="font-medium text-gray-700" id="opt2-idle-display">0</span>
+            </div>
+            <div class="flex items-center justify-between text-sm mt-1 pt-1 border-t border-gray-200">
               <span class="text-gray-500">Allocated</span>
               <span class="font-bold text-green-700" id="opt2-allocated-display">0</span>
             </div>
@@ -604,7 +623,7 @@
                 <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
                   <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
-                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响，已按 Project Type 计算 Updated ETA。</p>
+                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响；由于实际交期取决于工厂产能、生产计划、库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估。</p>
                 </div>
               </div>
             </div>
@@ -653,7 +672,7 @@
                 <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
                   <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
-                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响，已按 Project Type 计算 Updated ETA。</p>
+                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响；由于实际交期取决于工厂产能、生产计划、库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估。</p>
                 </div>
               </div>
             </div>
@@ -739,7 +758,7 @@
     <!-- ===== STEP 4: Scenario Comparison & Impact Summary ===== -->
     <div id="summary-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
       <div class="flex items-center gap-2 mb-5">
-        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
         <h2 class="font-bold text-gray-900">Scenario Summary & Impact Analysis</h2>
       </div>
 
@@ -782,8 +801,8 @@
                 <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Option</th>
                 <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Source</th>
                 <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
-                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Lead Time</th>
-                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">ETA</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Factory Operation Lead Time</th>
+                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Expected PO XF</th>
                 <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Key Impact</th>
               </tr>
             </thead>
@@ -818,64 +837,6 @@
     </div>
 
     <!-- ===== Confirmation Modal ===== -->
-    <div id="confirm-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
-      <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col pointer-events-auto">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <div>
-              <h3 class="font-bold text-gray-900">Action List — Feasibility Preview</h3>
-              <p class="text-xs text-gray-500 mt-0.5">Review scenario recap and allocation plan</p>
-            </div>
-            <button onclick="closeConfirmModal()" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <div class="p-6 overflow-auto flex-1">
-            <!-- Scenario Recap -->
-            <div class="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
-              <div class="text-sm font-bold text-blue-800 mb-2">Scenario Recap</div>
-              <div class="grid grid-cols-2 gap-4 text-sm">
-                <div><span class="text-gray-500">Gap to Fill:</span> <span class="font-bold" id="modal-gap">6,792 pairs</span></div>
-                <div><span class="text-gray-500">Total Support:</span> <span class="font-bold text-blue-700" id="modal-total-support">0 pairs</span></div>
-              </div>
-            </div>
-
-            <!-- Allocation Plan -->
-            <div class="mb-6">
-              <div class="text-sm font-bold text-gray-900 mb-3">Allocation Plan</div>
-              <table class="w-full text-sm">
-                <thead class="bg-gray-50">
-                  <tr>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">#</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Target PO</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Style</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Color</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Size</th>
-                    <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Source</th>
-                    <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100" id="action-table-body">
-                  <!-- JS populated -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-            <button onclick="closeConfirmModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Close</button>
-            <button onclick="copyActionList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-              Copy Action List
-            </button>
-            <button onclick="exportActionList()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              Export CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     
     </div>
@@ -1129,6 +1090,11 @@
     const OWN_PO_FG_NOW = 1200;
     let selectedOpt3 = [];
     let selectedOpt4 = [];
+    const deselectedOpt3POs = new Set();   // source PO-group keys user excluded (Option 3)
+    const deselectedOpt4POs = new Set();   // source PO-group keys user excluded (Option 4)
+    let sourceModalGroups = [];            // PO groups currently rendered in source PO modal
+    let currentSourceModalOpt = null;      // which option the source PO modal is showing
+    let opt4ModalRegion = 'ALL';           // region quick-filter state (Option 4 modal)
 
     // PO-level allocation state
     let targetItems = [];          // demand items at PO/Style/Color/Size level
@@ -2486,7 +2452,10 @@
     // Option strategy state (for Option 3/4)
     let opt3Strategy = 'strategy1';
     let opt4Strategy = 'strategy1';
-    const LEADTIME_MAP = { CO: 77, CU: 77, MU: 91, NU: 105, NUL: 105, NUB: 105, NUBL: 105 };
+    // DEPRECATED: standard-leadtime based Updated ETA estimation was removed per business review —
+    // actual XF dates depend on factory capacity / production plan / inventory and cannot be
+    // reliably estimated from system data alone; factory will evaluate and confirm new dates.
+    // const LEADTIME_MAP = { CO: 77, CU: 77, MU: 91, NU: 105, NUL: 105, NUB: 105, NUBL: 105 };
 
     function getGap() {
       if (useRealData && targetItems.length > 0) {
@@ -2811,6 +2780,32 @@
       return parts;
     }
 
+    // ===== PO-group expand helpers =====
+    function groupRowsByPO(items, keyFn) {
+      const groups = [];
+      const map = new Map();
+      items.forEach(item => {
+        const key = keyFn(item);
+        let g = map.get(key);
+        if (!g) { g = { key: key, items: [] }; map.set(key, g); groups.push(g); }
+        g.items.push(item);
+      });
+      return groups;
+    }
+
+    function poGroupChevronSvg(extraClass) {
+      return '<svg class="group-chevron w-3 h-3 text-gray-400 flex-shrink-0 ' + (extraClass || '') + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+    }
+
+    function toggleGroupRows(el, cls) {
+      const rows = document.querySelectorAll('tr.' + cls);
+      if (rows.length === 0) return;
+      const willShow = rows[0].classList.contains('hidden');
+      rows.forEach(r => r.classList.toggle('hidden', !willShow));
+      const svg = el.querySelector('svg.group-chevron');
+      if (svg) svg.classList.toggle('open', willShow);
+    }
+
     function renderDemandPOStatus() {
       const mode = document.querySelector('input[name="entry-mode"]:checked')?.value || 'po';
       const tbody = document.getElementById('po-status-body');
@@ -2963,22 +2958,58 @@
       const tbody = document.getElementById('po-status-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-      targetItems.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50';
-        tr.innerHTML = `
-          <td class="px-3 py-2 font-medium text-gray-900">${r.po}</td>
-          <td class="px-3 py-2 text-gray-600">${r.projectType || '-'}</td>
-          <td class="px-3 py-2 text-gray-600">${r.style}</td>
-          <td class="px-3 py-2 text-gray-600">${r.color}</td>
-          <td class="px-3 py-2 text-gray-600">${r.size}</td>
-          <td class="px-3 py-2 text-gray-600">${r.xfDate}</td>
-          <td class="px-3 py-2 text-right font-medium text-gray-900">${r.demand.toLocaleString()}</td>
-          <td class="px-3 py-2 text-right text-green-600">${r.fg.toLocaleString()}</td>
-          <td class="px-3 py-2 text-right font-medium text-red-600">${r.shortage > 0 ? r.shortage.toLocaleString() : 0}</td>
-        `;
-        tbody.appendChild(tr);
+      const groups = groupRowsByPO(targetItems, r => r.po + '|' + r.style + '|' + r.color);
+      let html = '';
+      groups.forEach((g, gi) => {
+        const items = g.items;
+        const first = items[0];
+        const sumDemand = items.reduce((s, r) => s + r.demand, 0);
+        const sumFg = items.reduce((s, r) => s + r.fg, 0);
+        const sumShortage = items.reduce((s, r) => s + r.shortage, 0);
+        if (items.length === 1) {
+          html += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>${first.po}</td>
+            <td class="px-3 py-2 text-gray-600">${first.projectType || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${first.style}</td>
+            <td class="px-3 py-2 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2 text-gray-600">${first.size}</td>
+            <td class="px-3 py-2 text-gray-600">${first.xfDate}</td>
+            <td class="px-3 py-2 text-right font-medium text-gray-900">${sumDemand.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-medium text-red-600">${sumShortage > 0 ? sumShortage.toLocaleString() : 0}</td>
+          </tr>`;
+          return;
+        }
+        const cls = 'sz-t-' + gi;
+        html += `
+          <tr class="po-group-row hover:bg-gray-50" onclick="toggleGroupRows(this, '${cls}')">
+            <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg()}${first.po}</span></td>
+            <td class="px-3 py-2 text-gray-600">${first.projectType || '-'}</td>
+            <td class="px-3 py-2 text-gray-600">${first.style}</td>
+            <td class="px-3 py-2 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2 text-gray-400 text-xs">${items.length} sizes</td>
+            <td class="px-3 py-2 text-gray-600">${first.xfDate}</td>
+            <td class="px-3 py-2 text-right font-medium text-gray-900">${sumDemand.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-medium text-red-600">${sumShortage > 0 ? sumShortage.toLocaleString() : 0}</td>
+          </tr>`;
+        items.forEach(r => {
+          html += `
+          <tr class="size-detail-row ${cls} hidden">
+            <td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5 text-gray-600">${r.size}</td>
+            <td class="px-3 py-1.5 text-gray-400">${r.xfDate}</td>
+            <td class="px-3 py-1.5 text-right text-gray-700">${r.demand.toLocaleString()}</td>
+            <td class="px-3 py-1.5 text-right text-green-600">${r.fg.toLocaleString()}</td>
+            <td class="px-3 py-1.5 text-right text-red-500">${r.shortage > 0 ? r.shortage.toLocaleString() : 0}</td>
+          </tr>`;
+        });
       });
+      tbody.innerHTML = html;
       if (truncatedNote) {
         const noteRow = document.createElement('tr');
         noteRow.innerHTML = `<td colspan="9" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${truncatedNote}</td>`;
@@ -3010,6 +3041,17 @@
     }
 
     // ===== Inventory Sources & Allocation Engine =====
+    // Split pool physical FG inventory into:
+    //  - reservedQty: already reserved by open POs (destined for these POs, deduction point not yet reached)
+    //  - idleQty: unassigned surplus with no clear owner
+    // C-order is almost fully reserved (~98%); Preload is ~60-70% reserved.
+    function splitPoolInventory(type, qty, seed) {
+      if (qty <= 0) return { reservedQty: 0, idleQty: 0 };
+      const ratio = type === 'c-order' ? 0.98 : 0.60 + ((seed || 0) % 6) * 0.02;
+      const reserved = Math.min(qty, Math.round(qty * ratio));
+      return { reservedQty: reserved, idleQty: qty - reserved };
+    }
+
     function generateInventorySources() {
       inventorySources = [];
       const primaryRegion = getPrimaryRegion();
@@ -3060,6 +3102,7 @@
             qty: qty,
             originalQty: qty,
             poQty: poQty,
+            ...(isPool ? splitPoolInventory(type, qty, idx) : {}),
             region: isCross ? otherRegions[idx % otherRegions.length] : primaryRegion,
             xfDate: sourceXfDate,
             targetXfDate: item.xfDate,
@@ -3097,7 +3140,7 @@
     }
 
     function getTotalAvailableByType(type) {
-      return inventorySources.filter(s => s.sourceType === type).reduce((sum, s) => sum + s.qty, 0);
+      return inventorySources.filter(s => s.sourceType === type && isSourcePOSelected(s)).reduce((sum, s) => sum + s.qty, 0);
     }
 
     function getTotalAllocatedByType(type) {
@@ -3146,8 +3189,8 @@
         const src = inventorySources.find(s => s.id === a.sourceId);
         return !src || src.sourceType !== type;
       });
-      // Sort sources by target shortage descending
-      const sources = inventorySources.filter(s => s.sourceType === type).sort((a, b) => {
+      // Sort sources by target shortage descending; skip source POs the user deselected
+      const sources = inventorySources.filter(s => s.sourceType === type && isSourcePOSelected(s)).sort((a, b) => {
         const ta = targetItems.find(t => t.id === a.targetId);
         const tb = targetItems.find(t => t.id === b.targetId);
         return (tb ? tb.shortage : 0) - (ta ? ta.shortage : 0);
@@ -3156,7 +3199,13 @@
         const target = targetItems.find(t => t.id === src.targetId);
         if (!target) return;
         const remainingTarget = getTargetRemaining(target.id);
-        const qty = Math.min(src.qty, remainingTarget);
+        if (remainingTarget <= 0) return;
+        // Pool inventory (C-order / Preload): only the reserved portion is requisitioned —
+        // it was originally meant for these target POs (deduction point not yet reached),
+        // so the factory simply deducts it earlier. Idle inventory is normally not touched.
+        const isPool = src.sourceType === 'c-order' || src.sourceType === 'preload';
+        const cap = isPool && src.reservedQty !== undefined ? src.reservedQty : src.qty;
+        const qty = Math.min(cap, remainingTarget);
         if (qty > 0) {
           allocations.push({ targetId: target.id, sourceId: src.id, qty });
         }
@@ -3203,6 +3252,17 @@
         const allocatedDisplay = document.getElementById(opt + '-allocated-display');
         if (allocatedDisplay) allocatedDisplay.textContent = allocated.toLocaleString();
 
+        // Reserved / Idle sub-metrics for pool inventory (Option 1/2)
+        if (type === 'c-order' || type === 'preload') {
+          const poolSources = inventorySources.filter(s => s.sourceType === type);
+          const reserved = poolSources.reduce((sum, s) => sum + (s.reservedQty || 0), 0);
+          const idle = poolSources.reduce((sum, s) => sum + (s.idleQty || 0), 0);
+          const reservedEl = document.getElementById(opt + '-reserved-display');
+          const idleEl = document.getElementById(opt + '-idle-display');
+          if (reservedEl) reservedEl.textContent = reserved.toLocaleString();
+          if (idleEl) idleEl.textContent = idle.toLocaleString();
+        }
+
         const useAllBtn = document.getElementById(opt + '-use-all');
         const clearBtn = document.getElementById(opt + '-clear');
         const checked = document.getElementById(opt + '-check').checked;
@@ -3226,12 +3286,13 @@
           const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
           noteEl.textContent = strategy === 'strategy1'
             ? '策略1 · 仅取交期晚于目标 PO 的库存'
-            : '策略2 · Updated ETA 已按 Project Type 计算';
+            : '策略2 · 新交期无法准确预估，待工厂评估';
         }
         if (!checked || !countEl || !qtyEl) return;
-        const sources = inventorySources.filter(s => s.sourceType === type && s.qty > 0).sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
+        const sources = inventorySources.filter(s => s.sourceType === type && s.qty > 0 && isSourcePOSelected(s)).sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
         const totalQty = sources.reduce((sum, s) => sum + (s.qty || 0), 0);
-        countEl.textContent = sources.length.toLocaleString();
+        const poCount = new Set(sources.map(s => s.sourcePO)).size;
+        countEl.textContent = poCount.toLocaleString();
         qtyEl.textContent = totalQty.toLocaleString();
       };
 
@@ -3243,53 +3304,211 @@
     }
 
     function openSourcePOModal(opt) {
+      if (!opt) return;
+      currentSourceModalOpt = opt;
       const modal = document.getElementById('source-po-modal');
       const title = document.getElementById('source-po-modal-title');
       const subtitle = document.getElementById('source-po-modal-subtitle');
       const head = document.getElementById('source-po-modal-head');
       const body = document.getElementById('source-po-modal-body');
+      const noteEl = document.getElementById('source-po-modal-note');
+      const filterEl = document.getElementById('source-po-modal-filter');
       if (!modal || !head || !body) return;
 
       const type = opt === 'opt3' ? 'same-region' : 'cross-region';
       const includeRegion = type === 'cross-region';
       const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
+      const deselected = deselectedSetFor(type);
 
       title.textContent = opt === 'opt3' ? 'Option 3 — Same-Region Source POs' : 'Option 4 — Cross-Region Source POs';
-      subtitle.textContent = strategy === 'strategy1'
+      subtitle.textContent = (strategy === 'strategy1'
         ? 'Strategy 1: Source POs with confirmed XF date later than target PO'
-        : 'Strategy 2: Source POs after cutoff (+14 days) with Updated ETA by Project Type';
+        : 'Strategy 2: Source POs after cutoff (+14 days)') + ' — check the POs you want to use';
 
-      const headers = [];
-      if (includeRegion) headers.push('Region');
-      headers.push('Source PO', 'Project Type', 'Conf XF date', 'Updated ETA', 'PO qty', 'Style', 'Color', 'Size', 'FG inventory');
-      head.innerHTML = headers.map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
-
-      const sources = inventorySources
-        .filter(s => s.sourceType === type && s.allowed)
-        .sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
-
-      if (sources.length === 0) {
-        body.innerHTML = '<tr><td colspan="' + headers.length + '" class="py-8 text-center text-sm text-gray-400">No available source POs</td></tr>';
-      } else {
-        body.innerHTML = sources.map(s => {
-          const regionCell = includeRegion ? `<td class="px-3 py-2 text-gray-600">${s.region || '-'}</td>` : '';
-          return `<tr class="hover:bg-gray-50">
-            ${regionCell}
-            <td class="px-3 py-2 font-medium text-gray-900">${s.sourcePO}</td>
-            <td class="px-3 py-2 text-gray-600">${s.projectType || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${s.xfDate || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${s.impactedEta || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${(s.poQty || s.originalQty || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-gray-600">${s.style}</td>
-            <td class="px-3 py-2 text-gray-600">${s.color}</td>
-            <td class="px-3 py-2 text-gray-600">${s.size}</td>
-            <td class="px-3 py-2 text-right font-medium text-gray-900">${(s.originalQty || s.qty || 0).toLocaleString()}</td>
-          </tr>`;
-        }).join('');
+      // Strategy 2: no Updated ETA estimation (new dates to be evaluated by factory)
+      if (noteEl) {
+        if (strategy === 'strategy2') {
+          noteEl.textContent = '\u26a0\ufe0f \u7b56\u75652 \u7684\u6e90 PO \u4ea4\u671f\u5c06\u53d7\u5230\u5f71\u54cd\u3002\u7531\u4e8e\u5b9e\u9645\u4ea4\u671f\u53d6\u51b3\u4e8e\u5de5\u5382\u4ea7\u80fd\u3001\u751f\u4ea7\u8ba1\u5212\u4e0e\u5e93\u5b58\u7b49\u7efc\u5408\u56e0\u7d20\uff0c\u7cfb\u7edf\u65e0\u6cd5\u51c6\u786e\u9884\u4f30\u65b0\u4ea4\u671f\uff0c\u5f85\u5de5\u5382\u6839\u636e\u5b9e\u9645\u60c5\u51b5\u8bc4\u4f30\u540e\u786e\u8ba4\u3002';
+          noteEl.classList.remove('hidden');
+        } else {
+          noteEl.classList.add('hidden');
+        }
       }
 
+      // Region quick filter (Option 4 only)
+      if (filterEl) {
+        if (includeRegion) {
+          const regions = [...new Set(inventorySources.filter(s => s.sourceType === type && s.allowed).map(s => s.region || '-'))].sort();
+          const chips = ['ALL'].concat(regions).map(r => {
+            const active = opt4ModalRegion === r;
+            const label = r === 'ALL' ? 'All Regions' : r;
+            return '<button type="button" onclick="setSourceModalRegion(\'' + r + '\')" class="px-2.5 py-1 text-xs rounded-full border ' + (active ? 'border-orange-500 bg-orange-50 text-orange-700 font-medium' : 'border-gray-200 bg-white text-gray-600 hover:border-orange-300') + '">' + label + '</button>';
+          }).join('');
+          filterEl.innerHTML = '<span class="text-xs text-gray-400 mr-1">Region:</span>' + chips;
+          filterEl.classList.remove('hidden');
+          filterEl.classList.add('flex');
+        } else {
+          filterEl.classList.add('hidden');
+          filterEl.classList.remove('flex');
+        }
+      }
+
+      // Headers: checkbox + columns (Updated ETA column removed)
+      let headHtml = '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500 w-8"><input type="checkbox" id="source-po-select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleAllSourcePOs(this.checked)"></th>';
+      if (includeRegion) headHtml += '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Region</th>';
+      headHtml += ['Source PO', 'Project Type', 'Conf XF date', 'PO qty', 'Style', 'Color', 'Size', 'FG inventory'].map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
+      head.innerHTML = headHtml;
+
+      let sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
+      if (includeRegion && opt4ModalRegion !== 'ALL') {
+        sources = sources.filter(s => (s.region || '-') === opt4ModalRegion);
+      }
+      sources.sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
+
+      const colSpan = includeRegion ? 10 : 9;
+      sourceModalGroups = groupRowsByPO(sources, sourcePOGroupKey).map(g => ({ key: g.key, items: g.items, type: type }));
+      sourceModalGroups.sort((a, b) => new Date(a.items[0].xfDate) - new Date(b.items[0].xfDate));
+
+      if (sourceModalGroups.length === 0) {
+        body.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-8 text-center text-sm text-gray-400">No available source POs</td></tr>';
+      } else {
+        let html = '';
+        sourceModalGroups.forEach((g, gi) => {
+          const items = g.items;
+          const first = items[0];
+          const sumPoQty = items.reduce((sum, s) => sum + (s.poQty || s.originalQty || 0), 0);
+          const sumFg = items.reduce((sum, s) => sum + (s.originalQty || s.qty || 0), 0);
+          const checked = !deselected.has(g.key);
+          const cbCell = '<td class="px-3 py-2" onclick="event.stopPropagation()"><input type="checkbox" data-spo-idx="' + gi + '" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleSourcePOByIdx(' + gi + ', this.checked)"' + (checked ? ' checked' : '') + '></td>';
+          const cbCellChild = '<td class="px-3 py-1.5"></td>';
+          const regionCell = includeRegion ? '<td class="px-3 py-2 text-gray-600">' + (first.region || '-') + '</td>' : '';
+          const regionCellChild = includeRegion ? '<td class="px-3 py-1.5"></td>' : '';
+          const dim = checked ? '' : 'opacity-40';
+          if (items.length === 1) {
+            html += '<tr class="hover:bg-gray-50 ' + dim + '">'
+              + cbCell + regionCell
+              + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>' + first.sourcePO + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + (first.projectType || '-') + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + (first.xfDate || '-') + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + sumPoQty.toLocaleString() + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + first.style + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + first.color + '</td>'
+              + '<td class="px-3 py-2 text-gray-600">' + first.size + '</td>'
+              + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + sumFg.toLocaleString() + '</td>'
+              + '</tr>';
+            return;
+          }
+          const cls = 'sz-s-' + gi;
+          html += '<tr class="po-group-row hover:bg-gray-50 ' + dim + '" onclick="toggleGroupRows(this, \'' + cls + '\')">'
+            + cbCell + regionCell
+            + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">' + poGroupChevronSvg() + first.sourcePO + '</span></td>'
+            + '<td class="px-3 py-2 text-gray-600">' + (first.projectType || '-') + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + (first.xfDate || '-') + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + sumPoQty.toLocaleString() + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + first.style + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + first.color + '</td>'
+            + '<td class="px-3 py-2 text-gray-400 text-xs">' + items.length + ' sizes</td>'
+            + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + sumFg.toLocaleString() + '</td>'
+            + '</tr>';
+          items.forEach(s => {
+            html += '<tr class="size-detail-row ' + cls + ' hidden ' + dim + '">'
+              + cbCellChild + regionCellChild
+              + '<td class="px-3 py-1.5 pl-9 text-gray-400">\u21b3</td>'
+              + '<td class="px-3 py-1.5"></td>'
+              + '<td class="px-3 py-1.5 text-gray-400">' + (s.xfDate || '-') + '</td>'
+              + '<td class="px-3 py-1.5 text-gray-400">' + (s.poQty || s.originalQty || 0).toLocaleString() + '</td>'
+              + '<td class="px-3 py-1.5"></td>'
+              + '<td class="px-3 py-1.5"></td>'
+              + '<td class="px-3 py-1.5 text-gray-600">' + s.size + '</td>'
+              + '<td class="px-3 py-1.5 text-right text-gray-700">' + (s.originalQty || s.qty || 0).toLocaleString() + '</td>'
+              + '</tr>';
+          });
+        });
+        body.innerHTML = html;
+      }
+
+      updateSourceModalSummary();
+      updateSourceModalSelectAll();
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+    }
+
+    function deselectedSetFor(type) {
+      return type === 'same-region' ? deselectedOpt3POs : deselectedOpt4POs;
+    }
+
+    function sourcePOGroupKey(s) {
+      return s.sourcePO + '|' + s.style + '|' + s.color;
+    }
+
+    function isSourcePOSelected(s) {
+      if (s.sourceType !== 'same-region' && s.sourceType !== 'cross-region') return true;
+      return !deselectedSetFor(s.sourceType).has(sourcePOGroupKey(s));
+    }
+
+    function updateSourceModalSummary() {
+      const el = document.getElementById('source-po-modal-summary');
+      if (!el || !currentSourceModalOpt) return;
+      const type = currentSourceModalOpt === 'opt3' ? 'same-region' : 'cross-region';
+      const deselected = deselectedSetFor(type);
+      const total = sourceModalGroups.length;
+      const selectedGroups = sourceModalGroups.filter(g => !deselected.has(g.key));
+      const selectedPairs = selectedGroups.reduce((sum, g) => sum + g.items.reduce((s, x) => s + (x.originalQty || x.qty || 0), 0), 0);
+      el.textContent = total === 0 ? '' : selectedGroups.length + ' of ' + total + ' POs selected \u00b7 ' + selectedPairs.toLocaleString() + ' pairs';
+    }
+
+    function updateSourceModalSelectAll() {
+      const cb = document.getElementById('source-po-select-all');
+      if (!cb || !currentSourceModalOpt) return;
+      const type = currentSourceModalOpt === 'opt3' ? 'same-region' : 'cross-region';
+      const deselected = deselectedSetFor(type);
+      const total = sourceModalGroups.length;
+      const selected = sourceModalGroups.filter(g => !deselected.has(g.key)).length;
+      cb.checked = total > 0 && selected === total;
+      cb.indeterminate = selected > 0 && selected < total;
+    }
+
+    function toggleSourcePOByIdx(gi, checked) {
+      const g = sourceModalGroups[gi];
+      if (!g) return;
+      const set = deselectedSetFor(g.type);
+      if (checked) set.delete(g.key); else set.add(g.key);
+      const cb = document.querySelector('#source-po-modal-body input[data-spo-idx="' + gi + '"]');
+      if (cb) { const row = cb.closest('tr'); if (row) row.classList.toggle('opacity-40', !checked); }
+      document.querySelectorAll('#source-po-modal-body tr.sz-s-' + gi).forEach(r => r.classList.toggle('opacity-40', !checked));
+      reallocateSourceType(g.type);
+      updateSourceModalSummary();
+      updateSourceModalSelectAll();
+    }
+
+    function toggleAllSourcePOs(checked) {
+      if (!currentSourceModalOpt) return;
+      const type = currentSourceModalOpt === 'opt3' ? 'same-region' : 'cross-region';
+      const set = deselectedSetFor(type);
+      sourceModalGroups.forEach((g, gi) => {
+        if (checked) set.delete(g.key); else set.add(g.key);
+        document.querySelectorAll('#source-po-modal-body tr.sz-s-' + gi).forEach(r => r.classList.toggle('opacity-40', !checked));
+      });
+      document.querySelectorAll('#source-po-modal-body input[data-spo-idx]').forEach(cb => {
+        cb.checked = checked;
+        const row = cb.closest('tr');
+        if (row) row.classList.toggle('opacity-40', !checked);
+      });
+      reallocateSourceType(type);
+      updateSourceModalSummary();
+      updateSourceModalSelectAll();
+    }
+
+    function reallocateSourceType(type) {
+      const opt = type === 'same-region' ? 'opt3' : 'opt4';
+      const check = document.getElementById(opt + '-check');
+      if (check && check.checked) allocateAll(type);
+      else recalc();
+    }
+
+    function setSourceModalRegion(region) {
+      opt4ModalRegion = region;
+      if (currentSourceModalOpt) openSourcePOModal(currentSourceModalOpt);
     }
 
     function closeSourcePOModal() {
@@ -3305,44 +3524,105 @@
       const types = ['c-order', 'preload', 'same-region', 'cross-region'];
       const typeToOpt = { 'c-order': 'opt1', 'preload': 'opt2', 'same-region': 'opt3', 'cross-region': 'opt4' };
 
-      targetItems.forEach(t => {
-        const covered = getAllocatedToTarget(t.id);
-        const remaining = Math.max(0, t.shortage - covered);
+      const allocForItem = (t, type) => {
+        const sources = inventorySources.filter(s => s.sourceType === type && s.targetId === t.id);
+        const total = sources.reduce((sum, s) => {
+          const a = allocations.find(al => al.targetId === t.id && al.sourceId === s.id);
+          return sum + (a ? a.qty : 0);
+        }, 0);
+        return { hasSource: sources.length > 0, total: total };
+      };
 
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50';
+      const typeCell = (type, hasSource, total, padCls, fontCls) => {
+        const optChecked = document.getElementById(typeToOpt[type] + '-check').checked;
+        if (!optChecked || !hasSource) {
+          return `<td class="${padCls} text-right"><span class="text-xs text-gray-300">-</span></td>`;
+        }
+        return `<td class="${padCls} text-right ${fontCls}">${total.toLocaleString()}</td>`;
+      };
 
+      const groups = groupRowsByPO(targetItems, t => t.po + '|' + t.style + '|' + t.color);
+      let html = '';
+      groups.forEach((g, gi) => {
+        const items = g.items;
+        const first = items[0];
+
+        const sizeRowHtml = (t) => {
+          const covered = getAllocatedToTarget(t.id);
+          const remaining = Math.max(0, t.shortage - covered);
+          let cells = `
+            <td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5 text-gray-600">${t.size}</td>
+            <td class="px-3 py-1.5 text-right text-red-500">${t.shortage.toLocaleString()}</td>
+          `;
+          types.forEach(type => {
+            const r = allocForItem(t, type);
+            cells += typeCell(type, r.hasSource, r.total, 'px-3 py-1.5', 'text-gray-700');
+          });
+          cells += `
+            <td class="px-3 py-1.5 text-right text-blue-600">${covered.toLocaleString()}</td>
+            <td class="px-3 py-1.5 text-right ${remaining > 0 ? 'text-red-500' : 'text-green-600'}">${remaining.toLocaleString()}</td>
+          `;
+          return cells;
+        };
+
+        if (items.length === 1) {
+          const t = first;
+          const covered = getAllocatedToTarget(t.id);
+          const remaining = Math.max(0, t.shortage - covered);
+          let cells = `
+            <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>${t.po}</td>
+            <td class="px-3 py-2 text-gray-600">${t.style}</td>
+            <td class="px-3 py-2 text-gray-600">${t.color}</td>
+            <td class="px-3 py-2 text-gray-600">${t.size}</td>
+            <td class="px-3 py-2 text-right font-medium text-red-600">${t.shortage.toLocaleString()}</td>
+          `;
+          types.forEach(type => {
+            const r = allocForItem(t, type);
+            cells += typeCell(type, r.hasSource, r.total, 'px-3 py-2', 'font-medium text-gray-900');
+          });
+          cells += `
+            <td class="px-3 py-2 text-right font-medium text-blue-600">${covered.toLocaleString()}</td>
+            <td class="px-3 py-2 text-right font-medium ${remaining > 0 ? 'text-red-600' : 'text-green-600'}">${remaining.toLocaleString()}</td>
+          `;
+          html += `<tr class="hover:bg-gray-50">${cells}</tr>`;
+          return;
+        }
+
+        // PO-level group row (sums across sizes)
+        const cls = 'sz-m-' + gi;
+        const sumShortage = items.reduce((s, t) => s + t.shortage, 0);
+        const coveredSum = items.reduce((s, t) => s + getAllocatedToTarget(t.id), 0);
+        const remainingSum = Math.max(0, sumShortage - coveredSum);
         let cells = `
-          <td class="px-3 py-2 font-medium text-gray-900">${t.po}</td>
-          <td class="px-3 py-2 text-gray-600">${t.style}</td>
-          <td class="px-3 py-2 text-gray-600">${t.color}</td>
-          <td class="px-3 py-2 text-gray-600">${t.size}</td>
-          <td class="px-3 py-2 text-right font-medium text-red-600">${t.shortage.toLocaleString()}</td>
+          <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg()}${first.po}</span></td>
+          <td class="px-3 py-2 text-gray-600">${first.style}</td>
+          <td class="px-3 py-2 text-gray-600">${first.color}</td>
+          <td class="px-3 py-2 text-gray-400 text-xs">${items.length} sizes</td>
+          <td class="px-3 py-2 text-right font-medium text-red-600">${sumShortage.toLocaleString()}</td>
         `;
-
         types.forEach(type => {
-          const opt = typeToOpt[type];
-          const optChecked = document.getElementById(opt + '-check').checked;
-          const sources = inventorySources.filter(s => s.sourceType === type && s.targetId === t.id);
-          const totalAllocated = sources.reduce((sum, s) => {
-            const a = allocations.find(al => al.targetId === t.id && al.sourceId === s.id);
-            return sum + (a ? a.qty : 0);
-          }, 0);
-          if (!optChecked || sources.length === 0) {
-            cells += `<td class="px-3 py-2 text-right"><span class="text-xs text-gray-300">-</span></td>`;
-          } else {
-            cells += `<td class="px-3 py-2 text-right font-medium text-gray-900">${totalAllocated.toLocaleString()}</td>`;
-          }
+          let anySource = false;
+          let sumAlloc = 0;
+          items.forEach(t => {
+            const r = allocForItem(t, type);
+            if (r.hasSource) anySource = true;
+            sumAlloc += r.total;
+          });
+          cells += typeCell(type, anySource, sumAlloc, 'px-3 py-2', 'font-medium text-gray-900');
         });
-
         cells += `
-          <td class="px-3 py-2 text-right font-medium text-blue-600">${covered.toLocaleString()}</td>
-          <td class="px-3 py-2 text-right font-medium ${remaining > 0 ? 'text-red-600' : 'text-green-600'}">${remaining.toLocaleString()}</td>
+          <td class="px-3 py-2 text-right font-medium text-blue-600">${coveredSum.toLocaleString()}</td>
+          <td class="px-3 py-2 text-right font-medium ${remainingSum > 0 ? 'text-red-600' : 'text-green-600'}">${remainingSum.toLocaleString()}</td>
         `;
-
-        tr.innerHTML = cells;
-        tbody.appendChild(tr);
+        html += `<tr class="po-group-row hover:bg-gray-50" onclick="toggleGroupRows(this, '${cls}')">${cells}</tr>`;
+        items.forEach(t => {
+          html += `<tr class="size-detail-row ${cls} hidden">${sizeRowHtml(t)}</tr>`;
+        });
       });
+      tbody.innerHTML = html;
 
       // Total row
       const totalShortage = targetItems.reduce((sum, t) => sum + t.shortage, 0);
@@ -3537,6 +3817,9 @@
       return candidates.map((r, i) => ({ ...r, id: r.id || ('CAND-' + i) }));
     }
 
+    let candidateGroupsCache = [];
+    const expandedCandidateGroups = new Set();
+
     function renderCandidateTable() {
       const tbody = document.getElementById('candidate-body');
       const selectAll = document.getElementById('candidate-select-all');
@@ -3544,29 +3827,101 @@
       tbody.innerHTML = '';
       if (candidateItems.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" class="px-3 py-6 text-center text-gray-400 text-sm">No candidate POs found</td></tr>';
+        candidateGroupsCache = [];
       } else {
-        candidateItems.forEach(r => {
-          const checked = selectedCandidateIds.has(r.id) ? 'checked' : '';
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-gray-50';
-          tr.innerHTML = `
-            <td class="px-3 py-2"><input type="checkbox" class="candidate-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-id="${r.id}" onchange="toggleCandidate('${r.id}', this.checked)" ${checked}></td>
-            <td class="px-3 py-2 font-medium text-gray-900">${r.po_number}</td>
-            <td class="px-3 py-2 text-gray-600">${r.factory_project_type || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${r.style_name || r.style_number || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${r.color_code || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${String(r.size).trim()}</td>
-            <td class="px-3 py-2 text-gray-600">${r.conf_xf_date || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${r.po_production_status || '-'}</td>
-            <td class="px-3 py-2 text-right font-medium text-gray-900">${(Number(r.po_qty) || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right text-green-600">${(Number(r.fg_inventory) || 0).toLocaleString()}</td>
-            <td class="px-3 py-2 text-right font-medium text-red-600">${(r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0))).toLocaleString()}</td>
-          `;
-          tbody.appendChild(tr);
+        candidateGroupsCache = groupRowsByPO(candidateItems, c => (c.po_number + '|' + (c.style_name || c.style_number || '') + '|' + (c.color_code || '')));
+        let html = '';
+        candidateGroupsCache.forEach((g, gi) => {
+          const items = g.items;
+          const first = items[0];
+          const shortageOf = r => (r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0)));
+          const sumQty = items.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+          const sumFg = items.reduce((s, r) => s + (Number(r.fg_inventory) || 0), 0);
+          const sumShort = items.reduce((s, r) => s + shortageOf(r), 0);
+          const allChecked = items.every(r => selectedCandidateIds.has(r.id));
+          const style = first.style_name || first.style_number || '-';
+          const color = first.color_code || '-';
+          if (items.length === 1) {
+            html += `
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2"><input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleCandidateGroupByIdx(${gi}, this.checked)" ${allChecked ? 'checked' : ''}></td>
+              <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>${first.po_number}</td>
+              <td class="px-3 py-2 text-gray-600">${first.factory_project_type || '-'}</td>
+              <td class="px-3 py-2 text-gray-600">${style}</td>
+              <td class="px-3 py-2 text-gray-600">${color}</td>
+              <td class="px-3 py-2 text-gray-600">${String(first.size).trim()}</td>
+              <td class="px-3 py-2 text-gray-600">${first.conf_xf_date || '-'}</td>
+              <td class="px-3 py-2 text-gray-600">${first.po_production_status || '-'}</td>
+              <td class="px-3 py-2 text-right font-medium text-gray-900">${sumQty.toLocaleString()}</td>
+              <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
+              <td class="px-3 py-2 text-right font-medium text-red-600">${sumShort.toLocaleString()}</td>
+            </tr>`;
+            return;
+          }
+          const cls = 'sz-c-' + gi;
+          const isOpen = expandedCandidateGroups.has(g.key);
+          html += `
+            <tr class="po-group-row hover:bg-gray-50" onclick="toggleCandidateRows(this, ${gi})">
+              <td class="px-3 py-2" onclick="event.stopPropagation()"><input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-group-idx="${gi}" onchange="toggleCandidateGroupByIdx(${gi}, this.checked)" ${allChecked ? 'checked' : ''}></td>
+              <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg(isOpen ? 'open' : '')}${first.po_number}</span></td>
+              <td class="px-3 py-2 text-gray-600">${first.factory_project_type || '-'}</td>
+              <td class="px-3 py-2 text-gray-600">${style}</td>
+              <td class="px-3 py-2 text-gray-600">${color}</td>
+              <td class="px-3 py-2 text-gray-400 text-xs">${items.length} sizes</td>
+              <td class="px-3 py-2 text-gray-600">${first.conf_xf_date || '-'}</td>
+              <td class="px-3 py-2 text-gray-600">${first.po_production_status || '-'}</td>
+              <td class="px-3 py-2 text-right font-medium text-gray-900">${sumQty.toLocaleString()}</td>
+              <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
+              <td class="px-3 py-2 text-right font-medium text-red-600">${sumShort.toLocaleString()}</td>
+            </tr>`;
+          items.forEach(r => {
+            html += `
+            <tr class="size-detail-row ${cls} ${isOpen ? '' : 'hidden'}">
+              <td class="px-3 py-1.5"></td>
+              <td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>
+              <td class="px-3 py-1.5"></td>
+              <td class="px-3 py-1.5"></td>
+              <td class="px-3 py-1.5"></td>
+              <td class="px-3 py-1.5 text-gray-600">${String(r.size).trim()}</td>
+              <td class="px-3 py-1.5 text-gray-400">${r.conf_xf_date || '-'}</td>
+              <td class="px-3 py-1.5 text-gray-400">${r.po_production_status || '-'}</td>
+              <td class="px-3 py-1.5 text-right text-gray-700">${(Number(r.po_qty) || 0).toLocaleString()}</td>
+              <td class="px-3 py-1.5 text-right text-green-600">${(Number(r.fg_inventory) || 0).toLocaleString()}</td>
+              <td class="px-3 py-1.5 text-right text-red-500">${shortageOf(r).toLocaleString()}</td>
+            </tr>`;
+          });
+        });
+        tbody.innerHTML = html;
+        // Restore indeterminate state for partially selected groups
+        candidateGroupsCache.forEach((g, gi) => {
+          const cb = tbody.querySelector('input[data-group-idx="' + gi + '"]');
+          if (cb) {
+            const some = g.items.some(r => selectedCandidateIds.has(r.id));
+            const all = g.items.every(r => selectedCandidateIds.has(r.id));
+            cb.indeterminate = some && !all;
+          }
         });
       }
       if (selectAll) selectAll.checked = candidateItems.length > 0 && selectedCandidateIds.size === candidateItems.length;
       updateCandidateSummary();
+    }
+
+    function toggleCandidateRows(el, gi) {
+      const g = candidateGroupsCache[gi];
+      if (!g) return;
+      toggleGroupRows(el, 'sz-c-' + gi);
+      if (expandedCandidateGroups.has(g.key)) expandedCandidateGroups.delete(g.key);
+      else expandedCandidateGroups.add(g.key);
+    }
+
+    function toggleCandidateGroupByIdx(gi, checked) {
+      const g = candidateGroupsCache[gi];
+      if (!g) return;
+      g.items.forEach(r => {
+        if (checked) selectedCandidateIds.add(r.id);
+        else selectedCandidateIds.delete(r.id);
+      });
+      renderCandidateTable();
     }
 
     function updateCandidateSummary() {
@@ -3598,6 +3953,8 @@
     }
 
     function confirmCandidateSelection() {
+      deselectedOpt3POs.clear();
+      deselectedOpt4POs.clear();
       const selected = candidateItems.filter(r => selectedCandidateIds.has(r.id));
       if (selected.length === 0) {
         alert('请至少选择一个 PO');
@@ -3646,6 +4003,8 @@
         const impact = document.getElementById(opt + '-impact');
         if (impact) impact.classList.add('hidden');
       });
+      deselectedOpt3POs.clear();
+      deselectedOpt4POs.clear();
       document.getElementById('candidate-section').classList.add('hidden');
 
       if (entryMode === 'style' || entryMode === 'qty') {
@@ -3948,6 +4307,7 @@
             qty: qty,
             originalQty: qty,
             poQty: isPool ? qty : t.demand,
+            ...(isPool ? splitPoolInventory(type, qty, i) : {}),
             region: isCross ? otherRegions[i % otherRegions.length] : (r.target_region || 'EMEA'),
             xfDate: sourceXfDate,
             targetXfDate: t.xfDate,
@@ -4077,12 +4437,7 @@
         }
         s.allowed = allowed;
         s.qty = allowed ? (s.originalQty || 0) : 0;
-        if (strategy === 'strategy2' && allowed) {
-          const leadDays = LEADTIME_MAP[s.projectType] || 0;
-          s.impactedEta = addDays(s.xfDate, leadDays);
-        } else {
-          s.impactedEta = '';
-        }
+        // No Updated ETA estimation: new XF dates will be evaluated by the factory.
       });
     }
 
@@ -4243,7 +4598,7 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt1.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
-            <td class="px-3 py-2.5 text-gray-600"></td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">This FG was already reserved for the target POs; deduction point not yet reached (C-order: PO XF − 49 days), so not yet offset to the POs. Factory should deduct ASAP. No other impact.</td>
           </tr>
         `);
       }
@@ -4255,7 +4610,7 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt2.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
-            <td class="px-3 py-2.5 text-gray-600"></td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">This FG was already reserved for the target POs; deduction point not yet reached (Preload: PO XF − 77 days), so not yet offset to the POs. Factory should deduct ASAP. No other impact.</td>
           </tr>
         `);
       }
@@ -4267,7 +4622,7 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt3.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
-            <td class="px-3 py-2.5 text-gray-600">${opt3Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO ETA will be impacted; Updated ETA calculated by Project Type.'}</td>
+            <td class="px-3 py-2.5 text-gray-600">${opt3Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO XF dates will be impacted; new dates cannot be reliably estimated and will be confirmed by the factory.'}</td>
           </tr>
         `);
       }
@@ -4279,7 +4634,7 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt4.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
-            <td class="px-3 py-2.5 text-gray-600">${opt4Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO ETA will be impacted; Updated ETA calculated by Project Type.'}</td>
+            <td class="px-3 py-2.5 text-gray-600">${opt4Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO XF dates will be impacted; new dates cannot be reliably estimated and will be confirmed by the factory.'}</td>
           </tr>
         `);
       }
@@ -4302,16 +4657,6 @@
 
       const poCount = (sources) => new Set(sources.map(s => s.sourcePO)).size;
       const totalPairs = (sources) => sources.reduce((sum, s) => sum + (s.originalQty || s.qty || 0), 0);
-      const maxDelayDays = (sources) => {
-        let max = 0;
-        sources.forEach(s => {
-          if (s.impactedEta && s.xfDate) {
-            const diff = Math.round((new Date(s.impactedEta) - new Date(s.xfDate)) / (1000 * 60 * 60 * 24));
-            if (diff > max) max = diff;
-          }
-        });
-        return max;
-      };
 
       const cards = [];
       const opt3Checked = document.getElementById('opt3-check').checked;
@@ -4320,13 +4665,12 @@
       if (opt3Checked) {
         const strategy = opt3Strategy;
         const type = 'same-region';
-        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
+        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed && isSourcePOSelected(s));
         const po = poCount(sources);
         const pairs = totalPairs(sources);
-        const delay = strategy === 'strategy1' ? 0 : maxDelayDays(sources);
         const text = strategy === 'strategy1'
           ? '策略1：仅借用同区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
-          : '策略2：这些源 PO 的交期将受影响，已按 Project Type 计算 Updated ETA。';
+          : '策略2：这些源 PO 的交期将受影响；由于实际交期取决于工厂产能、生产计划与库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估后确认。';
         cards.push(`
           <div class="bg-teal-50 border border-teal-200 rounded-lg p-3">
             <div class="text-xs font-semibold text-teal-800 mb-1">Option 3 — Same Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
@@ -4341,12 +4685,12 @@
                 <div class="font-bold text-teal-800">${pairs.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-teal-100 p-2">
-                <div class="text-gray-500">最长交期延误</div>
-                <div class="font-bold text-teal-800">${delay.toLocaleString()} 天</div>
+                <div class="text-gray-500">新交期评估</div>
+                <div class="font-bold text-teal-800">${strategy === 'strategy1' ? '无影响' : '待工厂评估'}</div>
               </div>
             </div>
             <div class="mt-2">
-              <button type="button" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-teal-700 hover:text-teal-900 underline">View ${sources.length.toLocaleString()} source PO(s)</button>
+              <button type="button" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-teal-700 hover:text-teal-900 underline">View ${po.toLocaleString()} source PO(s)</button>
             </div>
           </div>
         `);
@@ -4355,13 +4699,12 @@
       if (opt4Checked) {
         const strategy = opt4Strategy;
         const type = 'cross-region';
-        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
+        const sources = inventorySources.filter(s => s.sourceType === type && s.allowed && isSourcePOSelected(s));
         const po = poCount(sources);
         const pairs = totalPairs(sources);
-        const delay = strategy === 'strategy1' ? 0 : maxDelayDays(sources);
         const text = strategy === 'strategy1'
           ? '策略1：仅借用跨区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
-          : '策略2：这些源 PO 的交期将受影响，已按 Project Type 计算 Updated ETA。';
+          : '策略2：这些源 PO 的交期将受影响；由于实际交期取决于工厂产能、生产计划与库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估后确认。';
         cards.push(`
           <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
             <div class="text-xs font-semibold text-orange-800 mb-1">Option 4 — Cross-Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
@@ -4376,12 +4719,12 @@
                 <div class="font-bold text-orange-800">${pairs.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-orange-100 p-2">
-                <div class="text-gray-500">最长交期延误</div>
-                <div class="font-bold text-orange-800">${delay.toLocaleString()} 天</div>
+                <div class="text-gray-500">新交期评估</div>
+                <div class="font-bold text-orange-800">${strategy === 'strategy1' ? '无影响' : '待工厂评估'}</div>
               </div>
             </div>
             <div class="mt-2">
-              <button type="button" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-orange-700 hover:text-orange-900 underline">View ${sources.length.toLocaleString()} source PO(s)</button>
+              <button type="button" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-orange-700 hover:text-orange-900 underline">View ${po.toLocaleString()} source PO(s)</button>
             </div>
           </div>
         `);
@@ -4408,6 +4751,8 @@
       resetAllocations();
       selectedOpt3 = [];
       selectedOpt4 = [];
+      deselectedOpt3POs.clear();
+      deselectedOpt4POs.clear();
       recalc();
     }
 
@@ -4430,8 +4775,8 @@
         'cross-region': (src) => `Cross-region ${src.region} PO (${src.sourcePO})`
       };
 
-      const actionRows = [];
-      let idx = 1;
+      // Build flat allocation rows, then group by target PO (expand for size level)
+      const flatRows = [];
       allocations.forEach(a => {
         const src = inventorySources.find(s => s.id === a.sourceId);
         const t = targetItems.find(x => x.id === a.targetId);
@@ -4439,20 +4784,57 @@
         const label = typeof sourceLabels[src.sourceType] === 'function'
           ? sourceLabels[src.sourceType](src)
           : sourceLabels[src.sourceType];
-        actionRows.push(`
-          <tr>
-            <td class="px-3 py-2.5 text-gray-500">${idx++}</td>
-            <td class="px-3 py-2.5 font-medium text-gray-900">${t.po}</td>
-            <td class="px-3 py-2.5 text-gray-600">${t.style}</td>
-            <td class="px-3 py-2.5 text-gray-600">${t.color}</td>
-            <td class="px-3 py-2.5 text-gray-600">${t.size}</td>
-            <td class="px-3 py-2.5 text-gray-600">${label}</td>
-            <td class="px-3 py-2.5 text-right font-medium text-gray-900">${a.qty.toLocaleString()}</td>
-          </tr>
-        `);
+        flatRows.push({ t, label, qty: a.qty });
       });
 
-      document.getElementById('action-table-body').innerHTML = actionRows.join('') || '<tr><td colspan="7" class="px-3 py-6 text-center text-gray-400 text-sm">No allocations yet.</td></tr>';
+      const groups = groupRowsByPO(flatRows, r => r.t.po + '|' + r.t.style + '|' + r.t.color);
+      let html = '';
+      groups.forEach((g, gi) => {
+        const items = g.items;
+        const first = items[0].t;
+        const sumQty = items.reduce((s, r) => s + r.qty, 0);
+        const distinctLabels = [...new Set(items.map(r => r.label))];
+        const sourceSummary = distinctLabels.length === 1 ? distinctLabels[0] : distinctLabels.length + ' source types';
+        const idxCell = gi + 1;
+        if (items.length === 1) {
+          html += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2.5 text-gray-500">${idxCell}</td>
+            <td class="px-3 py-2.5 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>${first.po}</td>
+            <td class="px-3 py-2.5 text-gray-600">${first.style}</td>
+            <td class="px-3 py-2.5 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2.5 text-gray-600">${first.size}</td>
+            <td class="px-3 py-2.5 text-gray-600">${items[0].label}</td>
+            <td class="px-3 py-2.5 text-right font-medium text-gray-900">${sumQty.toLocaleString()}</td>
+          </tr>`;
+          return;
+        }
+        const cls = 'sz-a-' + gi;
+        html += `
+          <tr class="po-group-row hover:bg-gray-50" onclick="toggleGroupRows(this, '${cls}')">
+            <td class="px-3 py-2.5 text-gray-500">${idxCell}</td>
+            <td class="px-3 py-2.5 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg()}${first.po}</span></td>
+            <td class="px-3 py-2.5 text-gray-600">${first.style}</td>
+            <td class="px-3 py-2.5 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2.5 text-gray-400 text-xs">${items.length} items</td>
+            <td class="px-3 py-2.5 text-gray-600">${sourceSummary}</td>
+            <td class="px-3 py-2.5 text-right font-medium text-gray-900">${sumQty.toLocaleString()}</td>
+          </tr>`;
+        items.forEach(r => {
+          html += `
+          <tr class="size-detail-row ${cls} hidden">
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5 text-gray-600">${r.t.size}</td>
+            <td class="px-3 py-1.5 text-gray-500">${r.label}</td>
+            <td class="px-3 py-1.5 text-right text-gray-700">${r.qty.toLocaleString()}</td>
+          </tr>`;
+        });
+      });
+
+      document.getElementById('action-table-body').innerHTML = html || '<tr><td colspan="7" class="px-3 py-6 text-center text-gray-400 text-sm">No allocations yet.</td></tr>';
 
       document.getElementById('confirm-modal').classList.remove('hidden');
       document.body.style.overflow = 'hidden';
@@ -5258,6 +5640,65 @@
 
 
   <!-- Source PO Modal -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+    <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col pointer-events-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 class="font-bold text-gray-900">Action List — Feasibility Preview</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Review scenario recap and allocation plan</p>
+          </div>
+          <button onclick="closeConfirmModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="p-6 overflow-auto flex-1">
+          <!-- Scenario Recap -->
+          <div class="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+            <div class="text-sm font-bold text-blue-800 mb-2">Scenario Recap</div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div><span class="text-gray-500">Gap to Fill:</span> <span class="font-bold" id="modal-gap">6,792 pairs</span></div>
+              <div><span class="text-gray-500">Total Support:</span> <span class="font-bold text-blue-700" id="modal-total-support">0 pairs</span></div>
+            </div>
+          </div>
+
+          <!-- Allocation Plan -->
+          <div class="mb-6">
+            <div class="text-sm font-bold text-gray-900 mb-3">Allocation Plan</div>
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">#</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Target PO</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Style</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Color</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Size</th>
+                  <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Source</th>
+                  <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100" id="action-table-body">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onclick="closeConfirmModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Close</button>
+          <button onclick="copyActionList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+            Copy Action List
+          </button>
+          <button onclick="exportActionList()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="source-po-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSourcePOModal()"></div>
     <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
@@ -5271,7 +5712,14 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
-        <div class="p-6 overflow-auto flex-1">
+        <div class="px-6 pt-4">
+          <div id="source-po-modal-note" class="hidden mb-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800"></div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div id="source-po-modal-filter" class="hidden flex-wrap items-center gap-1.5"></div>
+            <div class="text-xs text-gray-500" id="source-po-modal-summary"></div>
+          </div>
+        </div>
+        <div class="px-6 pb-6 overflow-auto flex-1">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 sticky top-0">
               <tr id="source-po-modal-head"></tr>
