@@ -58,10 +58,10 @@
   <nav class="bg-white border-b border-gray-200 sticky top-[73px] z-40">
     <div class="max-w-6xl mx-auto px-6">
       <div class="flex space-x-6" id="tab-nav">
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Schemes</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="detail" onclick="switchTab('detail')">Scheme Detail</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Insights</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="detail" onclick="switchTab('detail')">Insight Detail</button>
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="execution" onclick="switchTab('execution')">Execution</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="result" onclick="switchTab('result')">Result</button>
+        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="result" onclick="switchTab('result')">Result</button>
       </div>
     </div>
   </nav>
@@ -91,12 +91,12 @@
     <div id="tab-schemes" class="tab-panel">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h2 class="text-xl font-bold text-gray-900">Schemes</h2>
-          <p class="text-sm text-gray-500 mt-1">View and manage pull-forward scenarios</p>
+          <h2 class="text-xl font-bold text-gray-900">Insights</h2>
+          <p class="text-sm text-gray-500 mt-1">View and manage saved pull-in feasibility insights</p>
         </div>
         <button onclick="createNewScheme()" class="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          New Scheme
+          New Insight
         </button>
       </div>
 
@@ -131,7 +131,7 @@
             <!-- JS populated -->
           </tbody>
         </table>
-        <div id="scheme-list-empty" class="hidden py-12 text-center text-gray-400 text-sm">No schemes yet. Click "New Scheme" to create one.</div>
+        <div id="scheme-list-empty" class="hidden py-12 text-center text-gray-400 text-sm">No insights yet. Click "New Insight" to create one.</div>
       </div>
     </div>
 
@@ -143,14 +143,14 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-2">
-              <label class="text-sm font-medium text-gray-700">Scheme Name</label>
+              <label class="text-sm font-medium text-gray-700">Insight Name</label>
               <span class="text-xs text-gray-400" id="scheme-id-display">-</span>
               <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" id="scheme-status-display">Draft</span>
             </div>
             <input type="text" id="scheme-name-input" placeholder="e.g. EMEA July Pull-forward" class="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
           </div>
           <div id="scheme-action-buttons" class="flex items-center flex-wrap">
-            <button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>
+            <button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Insight</button>
           </div>
         </div>
         <div>
@@ -829,10 +829,16 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Reset Options
         </button>
-        <button onclick="openConfirmModal()" id="confirm-btn" disabled class="px-6 py-3 bg-white border border-blue-600 text-blue-600 font-bold rounded-lg btn-action flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Review Action List
-        </button>
+        <div class="flex items-center gap-3">
+          <button onclick="saveCurrentInsight()" class="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            Save Insight
+          </button>
+          <button onclick="openConfirmModal()" id="confirm-btn" disabled class="px-6 py-3 bg-white border border-blue-600 text-blue-600 font-bold rounded-lg btn-action flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Review Action List
+          </button>
+        </div>
       </div>
     </div>
 
@@ -848,12 +854,12 @@
           <h2 class="text-xl font-bold text-gray-900">CPT Execution</h2>
           <p class="text-sm text-gray-500 mt-1">Enter factory feedback and actual quantities</p>
         </div>
-        <div id="execution-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No scheme selected</div>
+        <div id="execution-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No insight selected</div>
       </div>
 
       <div id="execution-empty" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-        <div class="text-gray-400 mb-2">No scheme ready for execution.</div>
-        <div class="text-sm text-gray-500">Please select a scheme with status "Ready for CPT" or "In Execution" from the Schemes tab.</div>
+        <div class="text-gray-400 mb-2">No insight ready for execution.</div>
+        <div class="text-sm text-gray-500">Please select an insight with status "Ready for CPT" or "In Execution" from the Insights tab.</div>
       </div>
 
       <div id="execution-content" class="hidden">
@@ -861,7 +867,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h3 class="font-bold text-gray-900" id="execution-scheme-name">Scheme Name</h3>
+              <h3 class="font-bold text-gray-900" id="execution-scheme-name">Insight Name</h3>
               <p class="text-sm text-gray-500" id="execution-scheme-meta">ID · Region · Created</p>
             </div>
             <button onclick="exportFactoryList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
@@ -947,12 +953,12 @@
           <h2 class="text-xl font-bold text-gray-900">Execution Result</h2>
           <p class="text-sm text-gray-500 mt-1">Review factory execution and close the loop with demand region</p>
         </div>
-        <div id="result-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No scheme selected</div>
+        <div id="result-scheme-badge" class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">No insight selected</div>
       </div>
 
       <div id="result-empty" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-        <div class="text-gray-400 mb-2">No completed scheme to view.</div>
-        <div class="text-sm text-gray-500">Please select a scheme with status "Completed" from the Schemes tab.</div>
+        <div class="text-gray-400 mb-2">No completed insight to view.</div>
+        <div class="text-sm text-gray-500">Please select an insight with status "Completed" from the Insights tab.</div>
       </div>
 
       <div id="result-content" class="hidden">
@@ -960,7 +966,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h3 class="font-bold text-gray-900" id="result-scheme-name">Scheme Name</h3>
+              <h3 class="font-bold text-gray-900" id="result-scheme-name">Insight Name</h3>
               <p class="text-sm text-gray-500" id="result-scheme-meta">ID · Region · Created</p>
             </div>
             <div class="text-right hidden">
@@ -1069,7 +1075,7 @@
           <div class="flex justify-end" id="result-close-section">
             <button onclick="closeScheme()" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              Close Scheme
+              Close Insight
             </button>
           </div>
         </div>
@@ -2474,7 +2480,7 @@
     let activeTab = 'schemes';
 
     function generateSchemeId() {
-      return 'SCH-' + String(Date.now()).slice(-6);
+      return 'INS-' + String(Date.now()).slice(-6);
     }
 
     function getCurrentScheme() {
@@ -4889,10 +4895,11 @@
       document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
       document.getElementById('tab-' + tab).classList.remove('hidden');
       document.querySelectorAll('.tab-btn').forEach(btn => {
+        const hiddenCls = btn.classList.contains('hidden') ? ' hidden' : '';
         if (btn.dataset.tab === tab) {
-          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors';
+          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors' + hiddenCls;
         } else {
-          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors';
+          btn.className = 'tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors' + hiddenCls;
         }
       });
       if (tab === 'schemes') renderSchemeList();
@@ -4901,13 +4908,13 @@
     }
 
     function updateRoleAndTabUI() {
-      // Role switcher hidden; all tabs visible to all users
+      // Role switcher hidden; Execution/Result tabs hidden for MVP (insight-focused)
       const detailTab = document.querySelector('.tab-btn[data-tab="detail"]');
       const resultTab = document.querySelector('.tab-btn[data-tab="result"]');
       const executionTab = document.querySelector('.tab-btn[data-tab="execution"]');
       if (detailTab) detailTab.classList.remove('hidden');
-      if (resultTab) resultTab.classList.remove('hidden');
-      if (executionTab) executionTab.classList.remove('hidden');
+      if (resultTab) resultTab.classList.add('hidden');
+      if (executionTab) executionTab.classList.add('hidden');
     }
 
     // ===== Scheme CRUD =====
@@ -5156,9 +5163,6 @@
         const primaryRegion = (s.targetRegion || 'EMEA').split(',')[0];
         const actions = [];
         actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">Edit</button>`);
-        if (s.status === 'Completed') {
-          actions.push(`<button onclick="viewResultScheme('${s.id}')" class="text-green-600 hover:text-green-800 text-xs font-medium">View Result</button>`);
-        }
 
         return `
           <tr class="hover:bg-gray-50 transition-colors">
@@ -5185,14 +5189,14 @@
 
       if (currentRole === 'spt') {
         if (scheme.status === 'Draft') {
-          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>`;
+          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Insight</button>`;
           if (needsCoordination) {
             buttons += `<button onclick="markCoordinationComplete()" class="px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg btn-action flex items-center gap-2 mr-3">Mark Coordination Complete</button>`;
           } else {
             buttons += `<button onclick="submitToCPT()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">Submit to CPT</button>`;
           }
         } else if (scheme.status === 'Pending Coordination') {
-          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Scheme</button>`;
+          buttons += `<button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Insight</button>`;
           buttons += `<button onclick="submitToCPT()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">Submit to CPT</button>`;
         } else if (scheme.status === 'Ready for CPT' || scheme.status === 'In Execution') {
           buttons += `<span class="text-sm text-blue-600 font-medium mr-3">Submitted to CPT</span>`;
@@ -5200,7 +5204,7 @@
         } else if (scheme.status === 'Completed') {
           buttons += `<button onclick="viewResultScheme('${scheme.id}')" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">View Result</button>`;
         } else if (scheme.status === 'Closed') {
-          buttons += `<span class="text-sm text-gray-500 font-medium">Scheme closed</span>`;
+          buttons += `<span class="text-sm text-gray-500 font-medium">Insight closed</span>`;
         }
       } else {
         // CPT view
@@ -5227,9 +5231,31 @@
       const scheme = getCurrentScheme();
       if (scheme) {
         document.getElementById('scheme-status-display').textContent = scheme.status;
-        alert(`Scheme "${scheme.name || scheme.id}" saved.`);
+        alert(`Insight "${scheme.name || scheme.id}" saved.`);
         renderSchemeList();
       }
+    }
+
+    // Save button on Insight Detail page: creates an insight on first save
+    function saveCurrentInsight() {
+      const prev = getCurrentScheme();
+      const isNew = !prev;
+      const keepName = prev ? prev.name : ''; // name field lives in the hidden header; never clobber it here
+      if (isNew) {
+        const scheme = createNewSchemeData();
+        schemes.push(scheme);
+        currentSchemeId = scheme.id;
+      }
+      saveUItoScheme();
+      const scheme = getCurrentScheme();
+      if (isNew) {
+        const region = (scheme.targetRegion || 'EMEA').split(',')[0];
+        scheme.name = region + ' Pull-in Insight ' + scheme.createdAt;
+      } else if (keepName) {
+        scheme.name = keepName;
+      }
+      renderSchemeList();
+      alert(`Insight "${scheme.name}" saved.`);
     }
 
     function markCoordinationComplete() {
@@ -5255,14 +5281,14 @@
       }
       const needsCoordination = scheme.options.opt3.selected || scheme.options.opt4.selected;
       if (needsCoordination && scheme.status === 'Draft') {
-        alert('This scheme requires coordination first. Please mark coordination as complete.');
+        alert('This insight requires coordination first. Please mark coordination as complete.');
         return;
       }
       scheme.status = 'Ready for CPT';
       document.getElementById('scheme-status-display').textContent = scheme.status;
       updateActionButtons();
       renderSchemeList();
-      alert('Scheme submitted to CPT.');
+      alert('Insight submitted to CPT.');
     }
 
     function startExecution() {
@@ -5280,7 +5306,7 @@
       scheme.resultFeedbackToRegion = document.getElementById('result-feedback-to-region').value.trim();
       scheme.status = 'Closed';
       renderSchemeList();
-      alert('Scheme closed. Result has been recorded.');
+      alert('Insight closed. Result has been recorded.');
       switchTab('schemes');
     }
 
@@ -5294,7 +5320,7 @@
       if (!scheme || !['Ready for CPT', 'In Execution', 'Completed'].includes(scheme.status)) {
         empty.classList.remove('hidden');
         content.classList.add('hidden');
-        badge.textContent = 'No scheme selected';
+        badge.textContent = 'No insight selected';
         return;
       }
 
@@ -5452,7 +5478,7 @@
       if (!scheme || !['Completed', 'Closed'].includes(scheme.status)) {
         empty.classList.remove('hidden');
         content.classList.add('hidden');
-        badge.textContent = 'No scheme selected';
+        badge.textContent = 'No insight selected';
         return;
       }
 
@@ -5547,7 +5573,7 @@
       const scheme = getCurrentScheme();
       if (!scheme) return;
 
-      const rows = [['Scheme ID','Option','PO#','Region','Planned Qty','Original XF Date','Confirmed XF Date','Factory Contact','Owner','Notes'].join(',')];
+      const rows = [['Insight ID','Option','PO#','Region','Planned Qty','Original XF Date','Confirmed XF Date','Factory Contact','Owner','Notes'].join(',')];
       const optionLabels = {
         opt1: 'C-order FG',
         opt2: 'Preload FG',
@@ -5598,7 +5624,7 @@
 
       // Sample 2: Completed scheme to demonstrate Result tab
       const sample2 = createNewSchemeData();
-      sample2.id = 'SCH-' + String(Date.now() + 1).slice(-6);
+      sample2.id = 'INS-' + String(Date.now() + 1).slice(-6);
       sample2.name = 'APAC June Urgent Replenish';
       sample2.status = 'Completed';
       sample2.targetRegion = 'APAC';
