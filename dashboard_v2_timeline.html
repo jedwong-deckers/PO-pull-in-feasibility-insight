@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PO Pull-in Feasibility Insight</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
     .option-card { transition: all 0.3s ease; }
     .option-card:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-    .option-card.selected { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .option-card.selected { border-color: #4990A0; box-shadow: 0 0 0 3px rgba(73,144,160,0.12); }
     .btn-action { transition: all 0.2s ease; }
     .btn-action:active { transform: scale(0.96); }
     @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -30,59 +29,162 @@
     tr.po-group-row { cursor: pointer; }
     tr.size-detail-row td { background-color: #F9FAFB; font-size: 0.8125rem; }
     tr.size-detail-row:hover td { background-color: #F3F4F6; }
+
+    /* ===== DTD Skin · D-FOSS Design Tokens (from Figma) ===== */
+    :root {
+      --dtd-cyan:#4990A0; --dtd-cyan-dark:#3D7A87; --dtd-cyan-3:#92BCC6; --dtd-cyan-4:#B6D3D9; --dtd-cyan-5:#DBE9EC; --dtd-cyan-6:#EAF3F5;
+      --dtd-text:#333E47; --dtd-text-2:#5C656C; --dtd-text-3:#858B91; --dtd-text-4:#ADB2B5;
+      --dtd-border:#D6D8DA; --dtd-divider:#EBECED; --dtd-bg:#F5F5F6;
+      --dtd-green:#78A903; --dtd-red:#EB5931; --dtd-yellow:#ED9F09; --dtd-blue:#5494CF;
+    }
+    body { font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding-left:220px; transition:padding-left .2s ease; }
+    body.dtd-menu-collapsed { padding-left:58px; }
+    /* blue -> DTD cyan */
+    .bg-blue-600, .bg-blue-500 { background-color:var(--dtd-cyan)!important; }
+    .hover\:bg-blue-700:hover { background-color:var(--dtd-cyan-dark)!important; }
+    .group-hover\:bg-blue-500 { background-color:var(--dtd-cyan)!important; }
+    .text-blue-600, .text-blue-700 { color:var(--dtd-cyan)!important; }
+    .text-blue-800 { color:var(--dtd-text)!important; }
+    .bg-blue-50 { background-color:var(--dtd-cyan-6)!important; }
+    .border-blue-100 { border-color:var(--dtd-cyan-5)!important; }
+    .border-blue-300 { border-color:var(--dtd-cyan-4)!important; }
+    .border-blue-600 { border-color:var(--dtd-cyan)!important; }
+    .focus\:ring-blue-500:focus { --tw-ring-color:var(--dtd-cyan-4)!important; }
+    /* gray -> grayblue */
+    .text-gray-900, .text-gray-700 { color:var(--dtd-text)!important; }
+    .text-gray-600 { color:var(--dtd-text-2)!important; }
+    .text-gray-500 { color:var(--dtd-text-3)!important; }
+    .text-gray-400 { color:var(--dtd-text-4)!important; }
+    .border-gray-100, .border-gray-200 { border-color:var(--dtd-divider)!important; }
+    .border-gray-300 { border-color:var(--dtd-border)!important; }
+    .bg-gray-50 { background-color:var(--dtd-bg)!important; }
+    .bg-gray-100 { background-color:var(--dtd-divider)!important; }
+    .bg-gray-200 { background-color:var(--dtd-border)!important; }
+    .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color:var(--dtd-divider)!important; }
+    /* status colors -> DTD functional */
+    .text-green-600 { color:var(--dtd-green)!important; }
+    .text-red-500, .text-red-600 { color:var(--dtd-red)!important; }
+    .bg-red-50 { background-color:#FDEEEA!important; }
+    .bg-green-50 { background-color:#F1F6E6!important; }
+    .bg-amber-50 { background-color:#FFF8EA!important; }
+    .text-amber-800 { color:var(--dtd-yellow)!important; }
+    .border-amber-200 { border-color:#FFE2AB!important; }
+    /* radius & shadow */
+    .rounded-xl { border-radius:6px!important; }
+    .rounded-lg { border-radius:4px!important; }
+    .shadow-sm { box-shadow:0 1px 2px rgba(9,30,66,.05)!important; }
+    /* menubar collapse */
+    #dtd-menubar { width:220px; transition:width .2s ease; }
+    body.dtd-menu-collapsed #dtd-menubar { width:58px; }
+    body.dtd-menu-collapsed .dtd-menu-text { display:none; }
+    body.dtd-menu-collapsed .dtd-menu-item { justify-content:center; padding-left:0; padding-right:0; }
+    /* two-level menu */
+    .dtd-submenu-chevron { transition:transform .15s ease; }
+    .dtd-menu-group.open .dtd-submenu-chevron { transform:rotate(180deg); }
+    body.dtd-menu-collapsed .dtd-submenu { display:none; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-  <!-- Header -->
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold text-gray-900">PO Pull-in Feasibility Insight</h1>
-          <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">v2.4 Gap-Based Decision</span>
+  <!-- DTD Menubar -->
+  <aside id="dtd-menubar" class="fixed left-0 top-0 h-screen bg-white border-r border-[#EBECED] z-[60] flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-4 h-14 border-b border-[#EBECED] shrink-0">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <span class="w-5 h-5 rounded bg-[#4990A0] flex items-center justify-center shrink-0"><i data-lucide="container" class="w-3 h-3 text-white"></i></span>
+        <span class="dtd-menu-text text-[13px] font-bold text-[#333E47] whitespace-nowrap">Dock to Dock</span>
+        <span class="dtd-menu-text text-[10px] text-[#858B91] whitespace-nowrap">V2.0</span>
+      </div>
+      <button onclick="toggleDtdMenu()" class="text-[#858B91] hover:text-[#4990A0] shrink-0"><i data-lucide="panel-left" class="w-4 h-4"></i></button>
+    </div>
+    <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="home" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Dash Board</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="clipboard-list" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">PO Status</span></a>
+      <div class="dtd-menu-group open">
+        <button type="button" onclick="toggleDtdSubMenu(this)" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6] w-full">
+          <i data-lucide="lightbulb" class="w-4 h-4 shrink-0"></i>
+          <span class="dtd-menu-text whitespace-nowrap flex-1 text-left">Data Insight</span>
+          <i data-lucide="chevron-down" class="dtd-menu-text dtd-submenu-chevron w-3.5 h-3.5 shrink-0 text-[#858B91]"></i>
+        </button>
+        <div class="dtd-submenu space-y-1 mt-1">
+          <a href="#" class="dtd-menu-item flex items-center gap-3 pl-6 pr-3 py-2 rounded text-[13px] font-medium text-[#4990A0] bg-[#EAF3F5]"><i data-lucide="git-pull-request-arrow" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">PO Pull-in</span></a>
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <div class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">JW</div>
+      <div class="dtd-menu-group">
+        <button type="button" onclick="toggleDtdSubMenu(this)" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6] w-full">
+          <i data-lucide="eye" class="w-4 h-4 shrink-0"></i>
+          <span class="dtd-menu-text whitespace-nowrap flex-1 text-left">Data Visibility</span>
+          <i data-lucide="chevron-down" class="dtd-menu-text dtd-submenu-chevron w-3.5 h-3.5 shrink-0 text-[#858B91]"></i>
+        </button>
+        <div class="dtd-submenu space-y-1 mt-1 hidden">
+          <a href="#" class="dtd-menu-item flex items-center gap-3 pl-6 pr-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="boxes" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">FG Inventory</span></a>
+          <a href="#" class="dtd-menu-item flex items-center gap-3 pl-6 pr-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="package-check" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Production Output</span></a>
+          <a href="#" class="dtd-menu-item flex items-center gap-3 pl-6 pr-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="truck" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Order Fulfillment</span></a>
+          <a href="#" class="dtd-menu-item flex items-center gap-3 pl-6 pr-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="timer" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">OTD Performance</span></a>
+        </div>
+      </div>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="zap" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Exception</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="package" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Production Status</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="tag" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Tag Manager</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="history" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">History Log</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="factory" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Factory Profile</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="flag" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Critical Milestone</span></a>
+    </nav>
+    <div class="px-3 py-2 space-y-1 border-t border-[#EBECED] shrink-0">
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="bell" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Notification</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="circle-help" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Support</span></a>
+      <a href="#" class="dtd-menu-item flex items-center gap-3 px-3 py-2 rounded text-[13px] text-[#5C656C] hover:bg-[#F5F5F6]"><i data-lucide="settings" class="w-4 h-4 shrink-0"></i><span class="dtd-menu-text whitespace-nowrap">Setting</span></a>
+    </div>
+    <div class="flex items-center gap-2 p-3 border-t border-[#EBECED] shrink-0">
+      <div class="w-5 h-5 rounded bg-[#4990A0] flex items-center justify-center text-[9px] font-bold text-white shrink-0">JW</div>
+      <div class="dtd-menu-text overflow-hidden">
+        <div class="text-[12px] font-medium text-[#333E47] truncate">Jed Wong</div>
+        <div class="text-[10px] text-[#858B91] truncate">jed.wong@deckers.com</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Header -->
+  <header class="bg-white border-b border-[#EBECED] sticky top-0 z-50">
+    <div class="px-6 h-14 flex items-center justify-between">
+      <div class="flex items-baseline gap-3">
+        <h1 class="text-xl font-bold text-[#333E47]">PO Pull-in Feasibility Insight</h1>
+        <span class="text-xs text-[#858B91]">Gap-Based Decision</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-[11px] font-medium text-[#4990A0] bg-[#EAF3F5] px-2 py-0.5 rounded">v2.5</span>
+        <div class="w-6 h-6 bg-[#4990A0] rounded flex items-center justify-center text-[10px] font-bold text-white">JW</div>
       </div>
     </div>
   </header>
 
   <!-- Tab Navigation -->
-  <nav class="bg-white border-b border-gray-200 sticky top-[73px] z-40">
+  <nav class="bg-white border-b border-gray-200 sticky top-14 z-40">
     <div class="max-w-6xl mx-auto px-6">
       <div class="flex space-x-6" id="tab-nav">
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Insights</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors" data-tab="detail" onclick="switchTab('detail')">Insight Detail</button>
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="execution" onclick="switchTab('execution')">Execution</button>
         <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="result" onclick="switchTab('result')">Result</button>
       </div>
     </div>
   </nav>
 
-  <!-- Elevator Navigation -->
+  <!-- Elevator Navigation (visible only on Insight Detail tab, controlled by switchTab) -->
   <nav id="elevator-nav" class="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-end gap-2">
     <button onclick="scrollToSection('demand-input-section')" class="group flex items-center gap-2 text-right">
-      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">1</span>Demand Input</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+      <span class="hidden group-hover:block text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200 whitespace-nowrap">Demand Input</span>
+      <span class="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-500 text-xs font-bold flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-colors">1</span>
     </button>
     <button onclick="scrollToSection('gap-section')" class="group flex items-center gap-2 text-right">
-      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">2</span>Current Status</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+      <span class="hidden group-hover:block text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200 whitespace-nowrap">Current Status</span>
+      <span class="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-500 text-xs font-bold flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-colors">2</span>
     </button>
     <button onclick="scrollToSection('options-section')" class="group flex items-center gap-2 text-right">
-      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">3</span>Select Options</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+      <span class="hidden group-hover:block text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200 whitespace-nowrap">Select Options</span>
+      <span class="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-500 text-xs font-bold flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-colors">3</span>
     </button>
     <button onclick="scrollToSection('summary-section')" class="group flex items-center gap-2 text-right">
-      <span class="text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200"><span class="font-bold text-blue-600 mr-1">4</span>Scenario Summary</span>
-      <span class="w-3 h-3 rounded-full bg-gray-300 group-hover:bg-blue-500 transition-colors"></span>
+      <span class="hidden group-hover:block text-xs text-gray-600 bg-white px-2 py-1 rounded shadow border border-gray-200 whitespace-nowrap">Scenario Summary</span>
+      <span class="w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-500 text-xs font-bold flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 group-hover:text-white transition-colors">4</span>
     </button>
   </nav>
 
@@ -121,9 +223,9 @@
             <tr>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">ID</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Name</th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Region</th>
-              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500">Gap</th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Created</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Creator</th>
+              <th class="text-right px-4 py-3 text-xs font-medium text-gray-500">PO qty</th>
+              <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Created time</th>
               <th class="text-left px-4 py-3 text-xs font-medium text-gray-500">Actions</th>
             </tr>
           </thead>
@@ -138,32 +240,34 @@
 <!-- ===== TAB: Scheme Detail ===== -->
     <div id="tab-detail" class="tab-panel hidden">
 
-      <!-- Scheme Info Header (hidden by request) -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <label class="text-sm font-medium text-gray-700">Insight Name</label>
-              <span class="text-xs text-gray-400" id="scheme-id-display">-</span>
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" id="scheme-status-display">Draft</span>
-            </div>
-            <input type="text" id="scheme-name-input" placeholder="e.g. EMEA July Pull-forward" class="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-          </div>
-          <div id="scheme-action-buttons" class="flex items-center flex-wrap">
-            <button onclick="saveScheme()" class="px-5 py-2.5 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2 mr-3">Save Insight</button>
+      <!-- Detail context bar -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 mb-6 animate-slide-in">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <button onclick="switchTab('schemes')" class="text-sm text-gray-500 hover:text-blue-600 flex items-center gap-1 flex-shrink-0 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Back to Insight List
+            </button>
+            <span class="text-gray-300 flex-shrink-0">|</span>
+            <span id="detail-insight-name" class="text-sm font-bold text-gray-900 truncate">(Untitled)</span>
+            <span class="text-xs text-gray-400 flex-shrink-0" id="scheme-id-display">-</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 flex-shrink-0" id="scheme-status-display">Draft</span>
           </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Notes / Coordination Summary</label>
-          <textarea id="scheme-notes-input" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Record coordination notes, factory contacts, or any special instructions..."></textarea>
-        </div>
+      </div>
+
+      <!-- Scheme info fields (hidden; kept for save/load state) -->
+      <div class="hidden">
+        <input type="text" id="scheme-name-input">
+        <div id="scheme-action-buttons" class="flex items-center flex-wrap"></div>
+        <textarea id="scheme-notes-input" rows="2"></textarea>
       </div>
 
     <!-- ===== STEP 1: Demand Input ===== -->
     <div id="demand-input-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in">
       <div class="flex items-center gap-2 mb-5">
         <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
-        <h2 class="font-bold text-gray-900">Demand Input — Pull-in Request</h2>
+        <h2 class="font-bold text-[14px] text-gray-900">Pull-in Request</h2>
       </div>
 
       <!-- Entry Mode Switcher -->
@@ -227,26 +331,38 @@
         </div>
         <p class="text-xs text-gray-500 mt-2" id="entry-mode-desc">Confirmed order range; pull orders by PO#</p>
 
-        <!-- Real data toggle -->
-        <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <span class="text-sm font-medium text-blue-800">Real data mode</span>
-            <span class="text-xs text-blue-600" id="real-data-status">Using demo data</span>
+      </div>
+
+      <!-- Sub-mode toggles (style / qty), right-aligned above their filter cells -->
+      <div id="style-fields" class="mode-fields hidden mb-2">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="md:col-span-2 md:col-start-3 flex flex-wrap items-center gap-3">
+            <label class="text-sm font-medium text-gray-700">Target Style-Color <span class="text-red-500 font-normal">*</span></label>
+            <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-fit">
+              <button id="style-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchStyleSubMode('split')">分栏搜索 Style / Color</button>
+              <button id="style-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchStyleSubMode('combo')">组合批量搜索</button>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <input type="file" id="real-data-file" accept=".json,.xlsx" class="hidden" onchange="handleRealDataFile(event)">
-            <button id="load-real-data-btn" onclick="document.getElementById('real-data-file').click()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">Load Real Data</button>
-            <button id="clear-real-data-btn" onclick="clearRealData()" disabled class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 disabled:opacity-50">Back to Demo</button>
+        </div>
+      </div>
+      <div id="qty-fields" class="mode-fields hidden mb-2">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="md:col-span-2 md:col-start-3 flex flex-wrap items-center gap-3">
+            <label class="text-sm font-medium text-gray-700">Preferred Style-Color <span class="text-gray-400 font-normal">Optional</span></label>
+            <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-fit">
+              <button id="qty-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchQtySubMode('split')">分栏搜索 Style / Color</button>
+              <button id="qty-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchQtySubMode('combo')">组合批量搜索</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Common fields -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4" id="common-fields-grid">
-        <div class="flex flex-col justify-between">
+      <!-- Filters (unified grid) -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4" id="common-fields-grid">
+        <div class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Target Region
-            <span id="target-region-required" class="text-red-500 font-normal">Required</span>
+            <span id="target-region-required" class="text-red-500 font-normal">*</span>
           </label>
           <div class="relative">
             <button type="button" id="target-region-btn" onclick="toggleRegionDropdown()" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-left bg-white focus:ring-2 focus:ring-blue-500 outline-none flex items-center justify-between">
@@ -278,59 +394,103 @@
           </div>
           <input type="hidden" id="target-region" value="EMEA">
         </div>
-        <div id="xf-from-wrapper" class="flex flex-col justify-between">
+        <div id="xf-from-wrapper" class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (From)</label>
           <input type="date" id="xf-from" value="2026-08-01" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
         </div>
-        <div id="xf-to-wrapper" class="flex flex-col justify-between">
+        <div id="xf-to-wrapper" class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (To)</label>
           <input type="date" id="xf-to" value="2026-10-31" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
         </div>
-        <div id="request-xf-wrapper" class="flex flex-col justify-between">
-          <label class="block text-sm font-medium text-gray-700 mb-2" id="target-xf-date-label">Target XF Date <span class="text-gray-400 font-normal" id="target-xf-date-marker">Optional</span></label>
-          <input type="date" id="request-xf-date" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        <div id="request-xf-wrapper" class="flex flex-col">
+          <label class="block text-sm font-medium text-gray-700 mb-2" id="target-xf-date-label">Expected XF date <span class="text-gray-400 font-normal" id="target-xf-date-marker">Optional</span></label>
+          <input type="date" id="request-xf-date" value="" onchange="updateXfFilterHint()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          <p id="xf-filter-hint" class="invisible mt-1.5 text-xs text-gray-500 leading-relaxed">
+            将会筛选出交期晚于 <span id="xf-filter-hint-date" class="font-semibold text-blue-700">所选日期</span> 的 PO，作为 Pull-in 分析对象
+          </p>
         </div>
-        <div class="flex items-end">
-          <button onclick="loadScenario()" class="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            Search
-          </button>
+        <!-- Mode 1.1: PO number -->
+        <div id="po-fields" class="fcell fcell-po">
+          <label class="block text-sm font-medium text-gray-700 mb-2">PO number <span class="text-gray-400 font-normal">Optional</span></label>
+          <input type="text" id="po-list-input" value="PO#2026EM12345, PO#2026EM12346, PO#2026EM12347" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="PO#2025EM12345, PO#2025EM12346..." oninput="updateTargetMetrics()">
+          <p class="mt-1.5 text-xs text-gray-400">支持多个 PO，逗号分隔</p>
+        </div>
+        <!-- Mode 1.2: Style-Color (split) -->
+        <div class="fcell fcell-style style-sub-split hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style Number <span class="text-red-500 font-normal">*</span></label>
+          <input type="text" id="style-number-input" value="1166732" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+        </div>
+        <div class="fcell fcell-style style-sub-split hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Color Code <span class="text-red-500 font-normal">*</span></label>
+          <input type="text" id="color-code-input" value="CHE" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+        </div>
+        <!-- Mode 1.2: Style-Color (combo) -->
+        <div class="fcell fcell-style style-sub-combo hidden md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color 组合 <span class="text-red-500 font-normal">*</span></label>
+          <textarea id="style-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code，多组逗号或换行分隔" oninput="updateTargetMetrics()"></textarea>
+        </div>
+        <!-- Mode 1.3: Preferred Style-Color (split) -->
+        <div class="fcell fcell-qty qty-sub-split hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style Number <span class="text-gray-400 font-normal">Optional</span></label>
+          <input type="text" id="qty-style-number-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+        </div>
+        <div class="fcell fcell-qty qty-sub-split hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Color Code <span class="text-gray-400 font-normal">Optional</span></label>
+          <input type="text" id="qty-color-code-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+        </div>
+        <!-- Mode 1.3: Preferred Style-Color (combo) -->
+        <div class="fcell fcell-qty qty-sub-combo hidden md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color 组合 <span class="text-gray-400 font-normal">Optional</span></label>
+          <textarea id="qty-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code，多组逗号或换行分隔" oninput="updateTargetMetrics()"></textarea>
+        </div>
+        <!-- Mode 1.3: Expected Qty -->
+        <div class="fcell fcell-qty hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Expected Qty <span class="text-red-500 font-normal">*</span></label>
+          <input type="number" id="qty-input" value="7992" min="0" step="100" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 8000">
         </div>
       </div>
 
-      <!-- Mode 1.1: PO List -->
-      <div id="po-fields" class="mode-fields mt-4 pt-4 border-t border-gray-100">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Pull-in PO# List <span class="text-gray-400 font-normal">Optional</span></label>
-        <textarea id="po-list-input" rows="2" class="w-full md:w-2/3 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="PO#2025EM12345, PO#2025EM12346..." oninput="updateTargetMetrics()">PO#2026EM12345, PO#2026EM12346, PO#2026EM12347</textarea>
+      <!-- Search (Row 4) -->
+      <div class="flex justify-end">
+        <button onclick="loadScenario()" class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Search
+        </button>
       </div>
 
-      <!-- Mode 1.2: Style-Color -->
-      <div id="style-fields" class="mode-fields hidden mt-4 pt-4 border-t border-gray-100">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Target Style-Color <span class="text-red-500 font-normal">Required</span></label>
-            <input type="text" id="style-input" value="W Classic Mini II / Chestnut" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" oninput="updateTargetMetrics()">
+    </div>
+
+    <!-- ===== Supply Overview (Style-Color / Quantity mode) ===== -->
+    <div id="supply-overview-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">+</span>
+        <h2 class="font-bold text-[14px] text-gray-900">Supply Overview — 交期前后货量分布</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="rounded-lg border border-cyan-200 bg-cyan-50 p-4 cursor-pointer hover:shadow-md hover:border-cyan-300 transition-all" onclick="openSupplyPOListModal('before')">
+          <div class="text-xs text-gray-500 mb-2">交期前待出货量（即将出货）</div>
+          <div class="flex items-baseline gap-6">
+            <div><span id="before-qty" class="text-2xl font-bold text-gray-900">0</span> <span class="text-sm font-normal text-gray-500">pairs</span></div>
+            <div><span id="before-count" class="text-2xl font-bold text-gray-900">0</span> <span class="text-sm font-normal text-gray-500">POs</span></div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Expected Qty <span class="text-gray-400 font-normal">Optional</span></label>
-            <input type="number" id="style-qty-input" value="" min="0" step="100" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 8000">
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-xs text-gray-500">Conf XF ≤ Expected XF</span>
+            <span class="text-xs text-cyan-700 font-medium">查看 PO 明细 →</span>
+          </div>
+        </div>
+        <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all" onclick="openSupplyPOListModal('after')">
+          <div class="text-xs text-gray-500 mb-2">交期后可 Pull-in 量</div>
+          <div class="flex items-baseline gap-6">
+            <div><span id="after-qty" class="text-2xl font-bold text-amber-600">0</span> <span class="text-sm font-normal text-gray-500">pairs</span></div>
+            <div><span id="after-count" class="text-2xl font-bold text-amber-600">0</span> <span class="text-sm font-normal text-gray-500">POs</span></div>
+          </div>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-xs text-gray-500">Conf XF &gt; Expected XF</span>
+            <span class="text-xs text-amber-700 font-medium">查看 PO 明细 →</span>
           </div>
         </div>
       </div>
-
-      <!-- Mode 1.3: Quantity Only -->
-      <div id="qty-fields" class="mode-fields hidden mt-4 pt-4 border-t border-gray-100">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Expected Qty <span class="text-red-500 font-normal">Required</span></label>
-            <input type="number" id="qty-input" value="7992" min="0" step="100" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 8000">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Style-Color <span class="text-gray-400 font-normal">Optional</span></label>
-            <input type="text" id="qty-style-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. W Classic Mini II / Chestnut" oninput="updateTargetMetrics()">
-          </div>
-        </div>
-      </div>
+      <p class="text-xs text-gray-500">若交期前货量已满足需求，则无需 pull-in；如需补足，请在下方列表中选择交期后的 open PO 进行可行性分析。</p>
     </div>
 
     <!-- ===== Candidate PO Selection ===== -->
@@ -338,7 +498,7 @@
       <div class="flex items-center justify-between mb-5">
         <div>
           <h2 class="font-bold text-gray-900">Candidate POs</h2>
-          <p class="text-sm text-gray-500">Review and select the POs you want to pull in</p>
+          <p class="text-sm text-gray-500" id="candidate-subtitle">Review and select the POs you want to pull in</p>
         </div>
         <div class="text-sm font-medium text-blue-700" id="candidate-summary">0 POs selected · 0 pairs</div>
       </div>
@@ -374,6 +534,7 @@
           </tfoot>
         </table>
       </div>
+      <div id="candidate-pager"></div>
       <div class="mt-4 flex items-center justify-between">
         <span class="text-xs text-gray-500">Only selected POs will enter Total Demand / Gap analysis.</span>
         <button onclick="confirmCandidateSelection()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 btn-action">Analyze Selected POs</button>
@@ -456,6 +617,7 @@
           </tfoot>
         </table>
       </div>
+        <div id="po-status-pager"></div>
     </div>
   </div>
 
@@ -565,6 +727,18 @@
               <span class="font-bold text-blue-700" id="opt1-allocated-display">0</span>
             </div>
           </div>
+          <div id="opt1-reserved-entry" class="mt-3 hidden">
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+              <div class="text-xs text-gray-600">
+                <span id="opt1-reserved-po-count" class="font-medium text-gray-900">0</span> reserved PO(s),
+                total <span id="opt1-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs to be deducted
+              </div>
+              <button type="button" onclick="openReservedPOModal('opt1', { showTabs: false })" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                View full PO list
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Option 2: Preload FG -->
@@ -600,6 +774,18 @@
             <div class="flex items-center justify-between text-sm mt-1 pt-1 border-t border-gray-200">
               <span class="text-gray-500">Allocated</span>
               <span class="font-bold text-green-700" id="opt2-allocated-display">0</span>
+            </div>
+          </div>
+          <div id="opt2-reserved-entry" class="mt-3 hidden">
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+              <div class="text-xs text-gray-600">
+                <span id="opt2-reserved-po-count" class="font-medium text-gray-900">0</span> reserved PO(s),
+                total <span id="opt2-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs to be deducted
+              </div>
+              <button type="button" onclick="openReservedPOModal('opt2', { showTabs: false })" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                View full PO list
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -815,9 +1001,9 @@
         </div>
       </div>
 
-      <!-- Strategy Impact -->
+      <!-- Potential Impact (Option 1-4) -->
       <div id="strategy-impact-section" class="mb-6 hidden">
-        <div class="text-sm font-medium text-gray-700 mb-3">Strategy Impact</div>
+        <div class="text-sm font-medium text-gray-700 mb-3">Potential Impact</div>
         <div id="strategy-impact-body" class="space-y-3">
           <!-- JS populated -->
         </div>
@@ -1084,7 +1270,7 @@
 
 <!-- Footer -->
     <div class="mt-8 text-center text-xs text-gray-400 pb-8">
-      Pull Forward Scenario Simulator v2.4 — Gap-Based Decision
+      Pull Forward Scenario Simulator v2.5 — Gap-Based Decision
     </div>
 
   
@@ -2445,15 +2631,40 @@
   }
 ];
 
-    // Real data state
-    let realData = null;           // raw rows from table1.json
-    let useRealData = false;       // when true, Search uses real data instead of demo generation
-    let sourcePOData = null;       // real Option 3 same-region source POs
-    let crossRegionSourcePOData = null; // real Option 4 cross-region source POs
+    // Embedded data state (loaded from DEFAULT_* constants in initApp)
+    let realData = null;           // normalized target PO rows
+    let sourcePOData = null;       // Option 3 same-region source POs
+    let crossRegionSourcePOData = null; // Option 4 cross-region source POs
 
     // Candidate selection state (for style-color / quantity entry modes)
     let candidateItems = [];
     let selectedCandidateIds = new Set();
+
+    // ===== Table pagination =====
+    const TABLE_PAGE_SIZE = 10;
+    let candidatePage = 1;
+    let poStatusPage = 1;
+    let supplyModalPage = 1;
+    let sourceModalPage = 1;
+
+    function renderPager(el, total, page, pageSize, onChange) {
+      if (!el) return;
+      const pages = Math.ceil(total / pageSize);
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      const p = Math.min(Math.max(1, page), pages);
+      const btnCls = 'px-2.5 py-1 text-xs rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed';
+      el.innerHTML = '<div class="flex items-center justify-between gap-3 py-3 text-xs text-gray-500">'
+        + '<span>共 ' + total.toLocaleString() + ' 条</span>'
+        + '<div class="flex items-center gap-2">'
+        + '<button type="button" data-pager="prev" ' + (p <= 1 ? 'disabled' : '') + ' class="' + btnCls + '">\u2039 Prev</button>'
+        + '<span>Page ' + p + ' / ' + pages + '</span>'
+        + '<button type="button" data-pager="next" ' + (p >= pages ? 'disabled' : '') + ' class="' + btnCls + '">Next \u203a</button>'
+        + '</div></div>';
+      const prev = el.querySelector('[data-pager="prev"]');
+      const next = el.querySelector('[data-pager="next"]');
+      if (prev) prev.onclick = () => onChange(p - 1);
+      if (next) next.onclick = () => onChange(p + 1);
+    }
 
     // Option strategy state (for Option 3/4)
     let opt3Strategy = 'strategy1';
@@ -2464,7 +2675,7 @@
     // const LEADTIME_MAP = { CO: 77, CU: 77, MU: 91, NU: 105, NUL: 105, NUB: 105, NUBL: 105 };
 
     function getGap() {
-      if (useRealData && targetItems.length > 0) {
+      if (targetItems.length > 0) {
         return targetItems.reduce((sum, t) => sum + t.shortage, 0);
       }
       if (decisionMode === 'deferred' && deferredDays > 0) {
@@ -2525,38 +2736,51 @@
       document.getElementById('entry-mode-desc').textContent = desc[mode];
 
       // Fields
-      document.getElementById('po-fields').classList.toggle('hidden', mode !== 'po');
       document.getElementById('style-fields').classList.toggle('hidden', mode !== 'style');
       document.getElementById('qty-fields').classList.toggle('hidden', mode !== 'qty');
+      // Unified filter grid: show only the cells of the active mode
+      document.querySelectorAll('.fcell').forEach(el => {
+        const m = el.classList.contains('fcell-po') ? 'po' : el.classList.contains('fcell-style') ? 'style' : 'qty';
+        el.classList.toggle('hidden', m !== mode);
+      });
 
       // XF date range only for PO List mode (1.1); request XF date is always visible
       const isPO = mode === 'po';
       document.getElementById('xf-from-wrapper').classList.toggle('hidden', !isPO);
       document.getElementById('xf-to-wrapper').classList.toggle('hidden', !isPO);
-      document.getElementById('common-fields-grid').className = isPO
-        ? 'grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4'
-        : 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-4';
+      document.getElementById('common-fields-grid').className = 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-4';
 
       // Target region required only for PO List mode
       const reqLabel = document.getElementById('target-region-required');
       if (isPO) {
-        reqLabel.textContent = 'Required';
+        reqLabel.textContent = '*';
         reqLabel.className = 'text-red-500 font-normal';
       } else {
         reqLabel.textContent = 'Optional';
         reqLabel.className = 'text-gray-400 font-normal';
       }
 
-      // Target XF Date is required for style/qty candidate search, optional for PO list
+      // Target XF Date is required for style/qty candidate search, optional for PO list.
+      // Style/qty modes show a plain date input with a live filter hint below;
+      // PO List mode keeps the original plain date field without the hint.
       const xfMarker = document.getElementById('target-xf-date-marker');
+      const xfLabel = document.getElementById('target-xf-date-label');
+      const xfHint = document.getElementById('xf-filter-hint');
+      if (xfLabel) {
+        xfLabel.childNodes[0].textContent = 'Expected XF date ';
+      }
       if (xfMarker) {
-        xfMarker.textContent = isPO ? 'Optional' : 'Required';
+        xfMarker.textContent = isPO ? 'Optional' : '*';
         xfMarker.className = isPO ? 'text-gray-400 font-normal' : 'text-red-500 font-normal';
       }
+      if (xfHint) xfHint.classList.toggle('invisible', isPO);
+      updateXfFilterHint();
 
       // Hide candidate selection and analysis sections when switching to style/qty
       const candidateSection = document.getElementById('candidate-section');
       if (candidateSection) candidateSection.classList.add('hidden');
+      const supplySection = document.getElementById('supply-overview-section');
+      if (supplySection) supplySection.classList.add('hidden');
       if (!isPO) {
         ['gap-section', 'po-status-section', 'options-section', 'allocation-section', 'summary-section'].forEach(id => {
           const el = document.getElementById(id);
@@ -2583,17 +2807,25 @@
         // Demo samples assign one distinct style-color per PO up to 3 samples
         styleCount = poCount > 0 ? Math.min(poCount, 3) : 0;
       } else if (mode === 'style') {
-        const styleText = document.getElementById('style-input').value.trim();
+        const el = styleSubMode === 'combo'
+          ? document.getElementById('style-combo-input')
+          : document.getElementById('style-number-input');
+        const styleText = el ? el.value.trim() : '';
         styleCount = styleText ? styleText.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0).length : 0;
         poCount = styleCount > 0 ? Math.max(1, Math.round(styleCount * 1.4)) : 0;
       } else if (mode === 'qty') {
-        const styleText = document.getElementById('qty-style-input').value.trim();
+        const el = qtySubMode === 'combo'
+          ? document.getElementById('qty-combo-input')
+          : document.getElementById('qty-style-number-input');
+        const styleText = el ? el.value.trim() : '';
         styleCount = styleText ? styleText.split(/[,\n]+/).map(s => s.trim()).filter(s => s.length > 0).length : estStylesFromDemand;
         poCount = estPOsFromDemand;
       }
 
-      document.getElementById('target-po-count').textContent = poCount;
-      document.getElementById('target-style-count').textContent = styleCount;
+      const poCountEl = document.getElementById('target-po-count');
+      const styleCountEl = document.getElementById('target-style-count');
+      if (poCountEl) poCountEl.textContent = poCount;
+      if (styleCountEl) styleCountEl.textContent = styleCount;
     }
 
     function updateTargetCountsFromItems() {
@@ -2731,7 +2963,7 @@
 
     function updateGapDisplay() {
       let totalDemand, ownFg, gap;
-      if (useRealData && targetItems.length > 0) {
+      if (targetItems.length > 0) {
         totalDemand = targetItems.reduce((sum, t) => sum + t.demand, 0);
         ownFg = targetItems.reduce((sum, t) => sum + t.fg, 0);
         gap = targetItems.reduce((sum, t) => sum + t.shortage, 0);
@@ -2812,161 +3044,35 @@
       if (svg) svg.classList.toggle('open', willShow);
     }
 
-    function renderDemandPOStatus() {
-      const mode = document.querySelector('input[name="entry-mode"]:checked')?.value || 'po';
-      const tbody = document.getElementById('po-status-body');
-      const totalDemand = TOTAL_DEMAND;
-      const ownFg = OWN_PO_FG_NOW;
-      tbody.innerHTML = '';
+    // Escape a string for embedding inside a single-quoted JS string in inline handlers
+    function jsStr(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 
-      const STYLE_COLOR_SAMPLES = [
-        { style: 'M TASMAN II', color: 'BLK' },
-        { style: 'M CLIFTON 11', color: 'BLCKP' },
-        { style: 'M CHALLENGER 8', color: 'STVR' }
-      ];
-      const SIZE_WEIGHTS = [0.20, 0.30, 0.30, 0.20];
-      const SIZE_LABELS = ['7', '8', '9', '10'];
-      const PROJECT_TYPES = ['CO', 'CU', 'MU', 'NU', 'NUL', 'NUB', 'NUBL'];
+    // Expand/collapse tracked in a Set keyed by group identity, so the state
+    // survives re-renders (pagination, tab switches) like the candidate table.
+    const expandedReservedGroups = new Set();
+    const expandedSourceGroups = new Set();
+    const expandedSupplyGroups = new Set();
 
-      function distributeDates(count, fromStr, toStr) {
-        const from = new Date(fromStr);
-        const to = new Date(toStr);
-        if (isNaN(from) || isNaN(to) || count <= 0) return [];
-        const span = to - from;
-        const dates = [];
-        for (let i = 0; i < count; i++) {
-          const t = count === 1 ? 0 : (i / (count - 1)) * span;
-          const d = new Date(from.getTime() + t);
-          dates.push(d.toISOString().slice(0, 10));
-        }
-        return dates;
-      }
-
-      function getSample(i) {
-        return STYLE_COLOR_SAMPLES[i % STYLE_COLOR_SAMPLES.length];
-      }
-
-      function parseStyleColor(text) {
-        const parts = text.split('/').map(p => p.trim());
-        return { style: parts[0] || '-', color: parts[1] || '-' };
-      }
-
-      const xfFrom = document.getElementById('xf-from').value || '2026-08-01';
-      const xfTo = document.getElementById('xf-to').value || '2026-10-31';
-
-      targetItems = [];
-      let skuGroups = [];
-
-      if (mode === 'po') {
-        const poText = document.getElementById('po-list-input').value;
-        const lines = poText.split('\n').map(l => l.trim()).filter(Boolean);
-        let parsed = [];
-        const hasTabs = lines.some(l => l.includes('\t'));
-        if (hasTabs) {
-          // Excel-style paste: PO \t Style \t Color [\t Region]
-          parsed = lines.map(line => {
-            const parts = line.split('\t').map(p => p.trim()).filter(Boolean);
-            return { po: parts[0] || 'TBD', style: parts[1] || '-', color: parts[2] || '-' };
-          });
-        } else {
-          // Comma/newline separated PO list: auto-assign sample style/color
-          const tokens = poText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-          parsed = tokens.map((po, i) => {
-            const sample = getSample(i);
-            return { po, style: sample.style, color: sample.color };
-          });
-        }
-        parsed = parsed.filter(r => r.po !== 'TBD');
-        const count = parsed.length || 1;
-        const demandSplit = distributeEvenly(totalDemand, count);
-        const fgSplit = distributeEvenly(ownFg, count);
-        const dates = distributeDates(count, xfFrom, xfTo);
-        parsed.forEach((r, i) => {
-          skuGroups.push({
-            po: r.po,
-            projectType: PROJECT_TYPES[i % PROJECT_TYPES.length],
-            style: r.style,
-            color: r.color,
-            xfDate: dates[i] || xfTo,
-            demand: demandSplit[i] || 0,
-            fg: fgSplit[i] || 0
-          });
-        });
-        if (skuGroups.length === 0) {
-          const sample = getSample(0);
-          skuGroups.push({ po: 'TBD', projectType: PROJECT_TYPES[0], style: sample.style, color: sample.color, xfDate: xfTo, demand: totalDemand, fg: ownFg });
-        }
-      } else if (mode === 'style') {
-        const styleText = document.getElementById('style-input').value.trim();
-        const styles = styleText ? styleText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
-        const count = styles.length || 1;
-        const demandSplit = distributeEvenly(totalDemand, count);
-        const fgSplit = distributeEvenly(ownFg, count);
-        const dates = distributeDates(count, xfFrom, xfTo);
-        styles.forEach((s, i) => {
-          const sc = parseStyleColor(s);
-          const sample = getSample(i);
-          skuGroups.push({
-            po: 'Multiple',
-            projectType: PROJECT_TYPES[i % PROJECT_TYPES.length],
-            style: sc.style || sample.style,
-            color: sc.color || sample.color,
-            xfDate: dates[i] || xfTo,
-            demand: demandSplit[i] || 0,
-            fg: fgSplit[i] || 0
-          });
-        });
-        if (skuGroups.length === 0) {
-          const sample = getSample(0);
-          skuGroups.push({ po: 'Multiple', projectType: PROJECT_TYPES[0], style: sample.style, color: sample.color, xfDate: xfTo, demand: totalDemand, fg: ownFg });
-        }
-      } else {
-        const qtyStyle = document.getElementById('qty-style-input').value.trim();
-        const sc = parseStyleColor(qtyStyle);
-        const sample = getSample(0);
-        skuGroups.push({
-          po: 'TBD',
-          projectType: PROJECT_TYPES[0],
-          style: sc.style || sample.style,
-          color: sc.color || sample.color,
-          xfDate: xfTo,
-          demand: totalDemand,
-          fg: ownFg
-        });
-      }
-
-      // Explode each SKU group into Size-level rows
-      skuGroups.forEach((g, gi) => {
-        const demandBySize = distributeByWeights(g.demand, SIZE_WEIGHTS);
-        const fgBySize = distributeByWeights(g.fg, SIZE_WEIGHTS);
-        SIZE_LABELS.forEach((size, si) => {
-          const d = demandBySize[si] || 0;
-          const f = fgBySize[si] || 0;
-          targetItems.push({
-            id: 'T' + gi + '-S' + si,
-            po: g.po,
-            projectType: g.projectType,
-            style: g.style,
-            color: g.color,
-            size: size,
-            xfDate: g.xfDate,
-            demand: d,
-            fg: f,
-            shortage: Math.max(0, d - f)
-          });
-        });
-      });
-
-      renderPOTable();
+    function toggleGroupRowsTracked(el, cls, set, key) {
+      toggleGroupRows(el, cls);
+      if (set.has(key)) set.delete(key); else set.add(key);
     }
+
+    let poTableTruncatedNote = '';
 
     function renderPOTable(truncatedNote) {
       const tbody = document.getElementById('po-status-body');
       if (!tbody) return;
+      poTableTruncatedNote = truncatedNote || '';
       tbody.innerHTML = '';
       const groups = groupRowsByPO(targetItems, r => r.po + '|' + r.style + '|' + r.color);
+      const poPages = Math.max(1, Math.ceil(groups.length / TABLE_PAGE_SIZE));
+      if (poStatusPage > poPages) poStatusPage = poPages;
+      const poStart = (poStatusPage - 1) * TABLE_PAGE_SIZE;
+      const pageGroups = groups.slice(poStart, poStart + TABLE_PAGE_SIZE);
       let html = '';
-      groups.forEach((g, gi) => {
+      pageGroups.forEach((g, i) => {
+        const gi = poStart + i;
         const items = g.items;
         const first = items[0];
         const sumDemand = items.reduce((s, r) => s + r.demand, 0);
@@ -3016,11 +3122,12 @@
         });
       });
       tbody.innerHTML = html;
-      if (truncatedNote) {
+      if (poTableTruncatedNote) {
         const noteRow = document.createElement('tr');
-        noteRow.innerHTML = `<td colspan="9" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${truncatedNote}</td>`;
+        noteRow.innerHTML = `<td colspan="9" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${poTableTruncatedNote}</td>`;
         tbody.appendChild(noteRow);
       }
+      renderPager(document.getElementById('po-status-pager'), groups.length, poStatusPage, TABLE_PAGE_SIZE, p => { poStatusPage = p; renderPOTable(poTableTruncatedNote); });
 
       const totalDemandShown = targetItems.reduce((sum, r) => sum + r.demand, 0);
       const totalFgShown = targetItems.reduce((sum, r) => sum + r.fg, 0);
@@ -3056,6 +3163,208 @@
       const ratio = type === 'c-order' ? 0.98 : 0.60 + ((seed || 0) % 6) * 0.02;
       const reserved = Math.min(qty, Math.round(qty * ratio));
       return { reservedQty: reserved, idleQty: qty - reserved };
+    }
+
+    // Deterministic pseudo-random from a string seed
+    function seededRand(seedStr) {
+      let h = 0;
+      for (let i = 0; i < seedStr.length; i++) h = (h * 31 + seedStr.charCodeAt(i)) >>> 0;
+      return () => { h = (h * 1103515245 + 12345) >>> 0; return h / 4294967296; };
+    }
+
+    // Effective strategy-2 range: user-selected Target XF, or tomorrow by default
+    function getStrategy2Range() {
+      const req = (document.getElementById('request-xf-date') || {}).value || '';
+      const isDefault = !req;
+      const base = req || addDays(new Date().toISOString().slice(0, 10), 1);
+      return { base, cutoff: addDays(base, 14), isDefault };
+    }
+
+    // Reserved-PO groups for a pool type (c-order / preload): earlier-XF POs (the
+    // original deduction order) + the target PO itself (isTarget), with size-level
+    // rows. Sum of all size.qty == total reservedQty of the type.
+    function buildReservedGroups(type) {
+      const sources = inventorySources.filter(s => s.sourceType === type && (s.reservedQty || 0) > 0);
+      const map = new Map();
+      sources.forEach(s => {
+        const item = targetItems.find(t => t.id === s.targetId) || { po: 'PO#?', xfDate: '2026-08-01', region: 'EMEA', size: '-', demand: 0, fg: 0 };
+        const rand = seededRand(s.id + item.po);
+        const n = 2 + Math.floor(rand() * 2); // 2-3 earlier POs
+        let remaining = s.reservedQty;
+        for (let i = 0; i < n; i++) {
+          const qty = i === n - 1 ? Math.max(1, Math.round(remaining * 0.5)) : Math.max(1, Math.round(s.reservedQty * (0.15 + rand() * 0.25)));
+          remaining -= qty;
+          const po = 'PO#' + (item.region || 'EMEA') + String(10000 + Math.floor(rand() * 89999));
+          const xfDate = addDays(item.xfDate, -(14 + Math.floor(rand() * 42)));
+          const sizes = [{ size: item.size, fg: qty + Math.round(rand() * qty * 0.6), qty }];
+          map.set(po, { po, xfDate, isTarget: false, poQty: Math.round(qty * (1.3 + rand() * 0.7)), sizes });
+        }
+        // Target PO (merge size rows when a target PO spans multiple sources)
+        let g = map.get(item.po);
+        if (!g) { g = { po: item.po, xfDate: item.xfDate, isTarget: true, poQty: item.demand, sizes: [] }; map.set(item.po, g); }
+        g.sizes.push({ size: item.size, fg: item.fg || 0, qty: Math.max(1, remaining) });
+      });
+      return [...map.values()].sort((a, b) => (a.xfDate < b.xfDate ? -1 : 1));
+    }
+
+    function reservedGroupTotals(g) {
+      return {
+        fg: g.sizes.reduce((x, s) => x + s.fg, 0),
+        qty: g.sizes.reduce((x, s) => x + s.qty, 0)
+      };
+    }
+
+    // Update the opt1/opt2 "View full PO list" entry rows
+    function renderReservedSummary() {
+      [['opt1', 'c-order'], ['opt2', 'preload']].forEach(([opt, type]) => {
+        const entry = document.getElementById(opt + '-reserved-entry');
+        if (!entry) return;
+        const groups = buildReservedGroups(type);
+        const total = groups.reduce((x, g) => x + reservedGroupTotals(g).qty, 0);
+        entry.classList.toggle('hidden', groups.length === 0);
+        document.getElementById(opt + '-reserved-po-count').textContent = groups.length.toLocaleString();
+        document.getElementById(opt + '-reserved-po-qty').textContent = total.toLocaleString();
+      });
+    }
+
+    // Read-only modal (shared DOM with source-po-modal): reserved PO list with two
+    // tabs comparing the deduction order before / after this pull-in. Each tab
+    // renders one table; rows are expandable to size level.
+    let reservedModalState = null; // { opt, type, order: 'before'|'after', groups }
+
+    function buildReservedRowsHtml(groups) {
+      let html = '';
+      groups.forEach((g, gi) => {
+        const t = reservedGroupTotals(g);
+        const tag = g.isTarget ? ' <span class="px-1.5 py-0.5 rounded text-white bg-blue-600" style="font-size:10px">Target · 优先抵扣</span>' : '';
+        const seqBadge = '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold '
+          + (g.isTarget ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500') + '">' + (gi + 1) + '</span>';
+        if (g.sizes.length === 1) {
+          const s = g.sizes[0];
+          html += '<tr class="hover:bg-gray-50' + (g.isTarget ? ' bg-blue-50/60' : '') + '">'
+            + '<td class="px-3 py-2">' + seqBadge + '</td>'
+            + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>' + g.po + tag + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + s.size + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + g.poQty.toLocaleString() + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + s.fg.toLocaleString() + '</td>'
+            + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + s.qty.toLocaleString() + '</td>'
+            + '</tr>';
+          return;
+        }
+        const cls = 'rsz-' + gi;
+        const isOpen = expandedReservedGroups.has(g.po);
+        html += '<tr class="po-group-row hover:bg-gray-50 cursor-pointer' + (g.isTarget ? ' bg-blue-50/60' : '') + '" onclick="toggleGroupRowsTracked(this, \'' + cls + '\', expandedReservedGroups, \'' + jsStr(g.po) + '\')">'
+          + '<td class="px-3 py-2">' + seqBadge + '</td>'
+          + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">' + poGroupChevronSvg(isOpen ? 'open' : '') + g.po + tag + '</span></td>'
+          + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+          + '<td class="px-3 py-2 text-gray-400 text-xs">' + g.sizes.length + ' sizes</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + g.poQty.toLocaleString() + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + t.fg.toLocaleString() + '</td>'
+          + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + t.qty.toLocaleString() + '</td>'
+          + '</tr>';
+        g.sizes.forEach(s => {
+          html += '<tr class="size-detail-row ' + cls + (isOpen ? '' : ' hidden') + '">'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5 text-gray-600">' + s.size + '</td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5 text-gray-400">' + s.fg.toLocaleString() + '</td>'
+            + '<td class="px-3 py-1.5 text-right text-gray-700">' + s.qty.toLocaleString() + '</td>'
+            + '</tr>';
+        });
+      });
+      return html;
+    }
+
+    function renderReservedModal() {
+      const st = reservedModalState;
+      if (!st) return;
+      const body = document.getElementById('source-po-modal-body');
+      const summaryEl = document.getElementById('source-po-modal-summary');
+      const tabBefore = document.getElementById('reserved-tab-before');
+      const tabAfter = document.getElementById('reserved-tab-after');
+
+      const ordered = st.order === 'after'
+        ? [...st.groups.filter(g => g.isTarget), ...st.groups.filter(g => !g.isTarget)]
+        : st.groups;
+
+      const rStart = (sourceModalPage - 1) * TABLE_PAGE_SIZE;
+      body.innerHTML = buildReservedRowsHtml(ordered.slice(rStart, rStart + TABLE_PAGE_SIZE));
+      renderPager(document.getElementById('source-po-modal-pager'), ordered.length, sourceModalPage, TABLE_PAGE_SIZE, p => { sourceModalPage = p; renderReservedModal(); });
+
+      const activeCls = 'px-1 pb-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600 transition-colors';
+      const idleCls = 'px-1 pb-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors';
+      if (st.showTabs !== false) {
+        if (tabBefore) tabBefore.className = st.order === 'before' ? activeCls : idleCls;
+        if (tabAfter) tabAfter.className = st.order === 'after' ? activeCls : idleCls;
+      }
+
+      if (summaryEl) {
+        const total = st.groups.reduce((x, g) => x + reservedGroupTotals(g).qty, 0);
+        const base = st.groups.length + ' POs · total ' + total.toLocaleString() + ' pairs to be deducted';
+        summaryEl.textContent = st.showTabs === false
+          ? base
+          : (st.order === 'after'
+            ? base + ' · Target PO 已调整至抵扣顺序最前，优先抵扣'
+            : base + ' · 原计划按 Conf XF 升序逐一抵扣');
+      }
+    }
+
+    function switchReservedModalTab(order) {
+      if (!reservedModalState) return;
+      reservedModalState.order = order;
+      sourceModalPage = 1;
+      renderReservedModal();
+    }
+
+    // opts.showTabs=false: plain "PO list" view (no before/after comparison tabs, no amber note)
+    function openReservedPOModal(opt, { showTabs = true } = {}) {
+      const type = opt === 'opt1' ? 'c-order' : 'preload';
+      const modal = document.getElementById('source-po-modal');
+      const title = document.getElementById('source-po-modal-title');
+      const subtitle = document.getElementById('source-po-modal-subtitle');
+      const head = document.getElementById('source-po-modal-head');
+      const body = document.getElementById('source-po-modal-body');
+      const noteEl = document.getElementById('source-po-modal-note');
+      const filterEl = document.getElementById('source-po-modal-filter');
+      const summaryEl = document.getElementById('source-po-modal-summary');
+      const tabsEl = document.getElementById('source-po-modal-tabs');
+      if (!modal || !head || !body) return;
+      currentSourceModalOpt = null; // read-only: disable checkbox-based summary updates
+
+      if (showTabs) {
+        title.textContent = (opt === 'opt1' ? 'Option 1 — C-order FG' : 'Option 2 — Preload FG') + '：抵扣顺序对比';
+        subtitle.textContent = '切换 Tab 查看变化前 / 变化后的抵扣顺序；点击 PO 行可展开到 size level';
+        if (noteEl) {
+          noteEl.textContent = '⚠️ 该库存原计划按交期升序逐一抵扣给以下 PO。标记 Target 的 PO 为本次 Pull-in 目标 PO，将会被优先抵扣（抵扣顺序提前）；其余早期 PO 后续需依赖正常生产履约。';
+          noteEl.classList.remove('hidden');
+        }
+      } else {
+        title.textContent = (opt === 'opt1' ? 'Option 1' : 'Option 2') + '：PO list';
+        subtitle.textContent = '点击 PO 行可展开到 size level';
+        if (noteEl) noteEl.classList.add('hidden');
+      }
+      if (filterEl) { filterEl.classList.add('hidden'); filterEl.classList.remove('flex'); }
+
+      head.innerHTML = ['#', 'PO number', 'Conf XF date', 'Size', 'PO qty', 'FG10', 'Qty to be deducted']
+        .map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
+
+      const groups = buildReservedGroups(type);
+      reservedModalState = { opt, type, order: 'after', groups, showTabs };
+      sourceModalPage = 1;
+      if (tabsEl) tabsEl.classList.toggle('hidden', !showTabs || groups.length === 0);
+
+      if (groups.length === 0) {
+        body.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-sm text-gray-400">No reserved FG</td></tr>';
+        if (summaryEl) summaryEl.textContent = '';
+        renderPager(document.getElementById('source-po-modal-pager'), 0, 1, TABLE_PAGE_SIZE, () => {});
+      } else {
+        renderReservedModal();
+      }
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     }
 
     function generateInventorySources() {
@@ -3280,6 +3589,9 @@
         }
       });
 
+      // Render reserved PO summary entries for opt1/opt2
+      renderReservedSummary();
+
       // Update source PO summary for opt3/opt4
       const updateSourceSummary = (type, opt) => {
         const listContainer = document.getElementById(opt + '-source-list');
@@ -3290,9 +3602,12 @@
         if (listContainer) listContainer.classList.toggle('hidden', !checked);
         if (noteEl) {
           const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
-          noteEl.textContent = strategy === 'strategy1'
-            ? '策略1 · 仅取交期晚于目标 PO 的库存'
-            : '策略2 · 新交期无法准确预估，待工厂评估';
+          if (strategy === 'strategy1') {
+            noteEl.textContent = '策略1 · 仅取交期晚于目标 PO 的库存';
+          } else {
+            const r = getStrategy2Range();
+            noteEl.textContent = `策略2 · Target XF ${r.base}${r.isDefault ? '（未选择 Target XF，默认取明天）' : '（用户所选）'} +2 周，取 Conf XF 晚于 ${r.cutoff} 的库存；新交期无法准确预估，待工厂评估`;
+          }
         }
         if (!checked || !countEl || !qtyEl) return;
         const sources = inventorySources.filter(s => s.sourceType === type && s.qty > 0 && isSourcePOSelected(s)).sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
@@ -3309,9 +3624,10 @@
       updateStrategyButtons('opt4', opt4Strategy);
     }
 
-    function openSourcePOModal(opt) {
+    function openSourcePOModal(opt, keepPage) {
       if (!opt) return;
       currentSourceModalOpt = opt;
+      if (!keepPage) sourceModalPage = 1;
       const modal = document.getElementById('source-po-modal');
       const title = document.getElementById('source-po-modal-title');
       const subtitle = document.getElementById('source-po-modal-subtitle');
@@ -3319,7 +3635,10 @@
       const body = document.getElementById('source-po-modal-body');
       const noteEl = document.getElementById('source-po-modal-note');
       const filterEl = document.getElementById('source-po-modal-filter');
+      const tabsEl = document.getElementById('source-po-modal-tabs');
       if (!modal || !head || !body) return;
+      reservedModalState = null; // source-PO modal has no before/after tabs
+      if (tabsEl) tabsEl.classList.add('hidden');
 
       const type = opt === 'opt3' ? 'same-region' : 'cross-region';
       const includeRegion = type === 'cross-region';
@@ -3327,9 +3646,10 @@
       const deselected = deselectedSetFor(type);
 
       title.textContent = opt === 'opt3' ? 'Option 3 — Same-Region Source POs' : 'Option 4 — Cross-Region Source POs';
+      const s2range = getStrategy2Range();
       subtitle.textContent = (strategy === 'strategy1'
         ? 'Strategy 1: Source POs with confirmed XF date later than target PO'
-        : 'Strategy 2: Source POs after cutoff (+14 days)') + ' — check the POs you want to use';
+        : `Strategy 2: Source POs with Conf XF after ${s2range.cutoff}（Target XF ${s2range.base}${s2range.isDefault ? '，未选择，默认取明天' : '，用户所选'} +14 天）`) + ' — check the POs you want to use';
 
       // Strategy 2: no Updated ETA estimation (new dates to be evaluated by factory)
       if (noteEl) {
@@ -3375,11 +3695,17 @@
       sourceModalGroups = groupRowsByPO(sources, sourcePOGroupKey).map(g => ({ key: g.key, items: g.items, type: type }));
       sourceModalGroups.sort((a, b) => new Date(a.items[0].xfDate) - new Date(b.items[0].xfDate));
 
+      const sPages = Math.max(1, Math.ceil(sourceModalGroups.length / TABLE_PAGE_SIZE));
+      if (sourceModalPage > sPages) sourceModalPage = sPages;
+      const sStart = (sourceModalPage - 1) * TABLE_PAGE_SIZE;
+      const pageGroups = sourceModalGroups.slice(sStart, sStart + TABLE_PAGE_SIZE);
+
       if (sourceModalGroups.length === 0) {
         body.innerHTML = '<tr><td colspan="' + colSpan + '" class="py-8 text-center text-sm text-gray-400">No available source POs</td></tr>';
       } else {
         let html = '';
-        sourceModalGroups.forEach((g, gi) => {
+        pageGroups.forEach((g, i) => {
+          const gi = sStart + i;
           const items = g.items;
           const first = items[0];
           const sumPoQty = items.reduce((sum, s) => sum + (s.poQty || s.originalQty || 0), 0);
@@ -3405,9 +3731,10 @@
             return;
           }
           const cls = 'sz-s-' + gi;
-          html += '<tr class="po-group-row hover:bg-gray-50 ' + dim + '" onclick="toggleGroupRows(this, \'' + cls + '\')">'
+          const isOpen = expandedSourceGroups.has(g.key);
+          html += '<tr class="po-group-row hover:bg-gray-50 ' + dim + '" onclick="toggleGroupRowsTracked(this, \'' + cls + '\', expandedSourceGroups, \'' + jsStr(g.key) + '\')">'
             + cbCell + regionCell
-            + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">' + poGroupChevronSvg() + first.sourcePO + '</span></td>'
+            + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">' + poGroupChevronSvg(isOpen ? 'open' : '') + first.sourcePO + '</span></td>'
             + '<td class="px-3 py-2 text-gray-600">' + (first.projectType || '-') + '</td>'
             + '<td class="px-3 py-2 text-gray-600">' + (first.xfDate || '-') + '</td>'
             + '<td class="px-3 py-2 text-gray-600">' + sumPoQty.toLocaleString() + '</td>'
@@ -3417,7 +3744,7 @@
             + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + sumFg.toLocaleString() + '</td>'
             + '</tr>';
           items.forEach(s => {
-            html += '<tr class="size-detail-row ' + cls + ' hidden ' + dim + '">'
+            html += '<tr class="size-detail-row ' + cls + (isOpen ? '' : ' hidden') + ' ' + dim + '">'
               + cbCellChild + regionCellChild
               + '<td class="px-3 py-1.5 pl-9 text-gray-400">\u21b3</td>'
               + '<td class="px-3 py-1.5"></td>'
@@ -3432,6 +3759,8 @@
         });
         body.innerHTML = html;
       }
+
+      renderPager(document.getElementById('source-po-modal-pager'), sourceModalGroups.length, sourceModalPage, TABLE_PAGE_SIZE, p => { sourceModalPage = p; openSourcePOModal(currentSourceModalOpt, true); });
 
       updateSourceModalSummary();
       updateSourceModalSelectAll();
@@ -3520,6 +3849,9 @@
     function closeSourcePOModal() {
       const modal = document.getElementById('source-po-modal');
       if (modal) modal.classList.add('hidden');
+      reservedModalState = null;
+      const tabsEl = document.getElementById('source-po-modal-tabs');
+      if (tabsEl) tabsEl.classList.add('hidden');
       document.body.style.overflow = '';
     }
 
@@ -3713,114 +4045,220 @@
       return styleMatch && colorMatch;
     }
 
-    function generateDemoCandidates(mode, targetXfDate, styles, minQty, preferredStyle) {
-      const STYLE_COLOR_SAMPLES = [
-        { style: 'M TASMAN II', color: 'BLK' },
-        { style: 'M CLIFTON 11', color: 'BLCKP' },
-        { style: 'M CHALLENGER 8', color: 'STVR' }
-      ];
-      const SIZE_LABELS = ['7', '8', '9', '10'];
-      const SIZE_WEIGHTS = [0.20, 0.30, 0.30, 0.20];
-      const region = document.getElementById('target-region').value || 'EMEA';
-      const rows = [];
-      let idx = 0;
-      const addPO = (styleObj, dateOffsetDays) => {
-        const poNum = 'DEMO-' + String(idx).padStart(5, '0');
-        const poTotal = 240 + (idx % 6) * 120; // 240 ~ 840
-        const demandBySize = distributeByWeights(poTotal, SIZE_WEIGHTS);
-        const dateStr = addDays(targetXfDate, dateOffsetDays);
-        SIZE_LABELS.forEach((size, si) => {
-          const qty = demandBySize[si] || 0;
-          const fg = Math.min(qty, Math.floor(qty * 0.1));
-          rows.push({
-            id: 'DEMO-' + idx + '-' + size,
-            po_number: poNum,
-            style_number: 'STY' + idx,
-            style_name: styleObj.style,
-            color_code: styleObj.color,
-            size: size,
-            target_region: region,
-            conf_xf_date: dateStr,
-            po_production_status: 'Unstarted',
-            factory_project_type: PROJECT_TYPES_ALL[idx % PROJECT_TYPES_ALL.length],
-            po_qty: qty,
-            fg_inventory: fg,
-            shortage: Math.max(0, qty - fg),
-            c_order: 0, preload: 0, same_region: 0, cross_region: 0
-          });
-        });
-        idx++;
-      };
-      if (mode === 'style') {
-        if (!styles || styles.length === 0) return [];
-        styles.forEach((sc, i) => {
-          const styleObj = (sc && sc.style) ? sc : STYLE_COLOR_SAMPLES[i % STYLE_COLOR_SAMPLES.length];
-          addPO(styleObj, 7 + i * 7);
-          addPO(styleObj, 14 + i * 7);
-          addPO(styleObj, 21 + i * 7);
-        });
-        return rows.filter(r => r.conf_xf_date > targetXfDate);
+    // Live-update the hint under Target XF: "将会筛选出交期晚于 XX 的 PO..."
+    function updateXfFilterHint() {
+      const dateEl = document.getElementById('xf-filter-hint-date');
+      if (!dateEl) return;
+      const v = (document.getElementById('request-xf-date') || {}).value || '';
+      if (v) {
+        dateEl.textContent = v;
+        dateEl.className = 'font-semibold text-blue-700';
       } else {
-        const styleObj = (preferredStyle && preferredStyle.style) ? preferredStyle : STYLE_COLOR_SAMPLES[0];
-        let sum = 0;
-        let offset = 7;
-        while (sum < minQty && offset <= 84) {
-          addPO(styleObj, offset);
-          sum = rows.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
-          offset += 7;
-        }
-        return rows;
+        dateEl.textContent = '所选日期';
+        dateEl.className = 'font-semibold text-gray-400';
       }
     }
 
-    function findCandidates(mode) {
-      const targetXfDate = document.getElementById('request-xf-date').value;
-      if (!targetXfDate) return [];
-      let candidates = [];
-      if (mode === 'style') {
-        const styleText = document.getElementById('style-input').value.trim();
-        const styles = styleText.split(/[\n,]+/).map(s => parseStyleColorInput(s)).filter(Boolean);
-        if (styles.length === 0) return [];
-        if (useRealData && realData) {
-          candidates = realData.filter(r => {
-            if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
-            if (!isNotShippedStatus(r.po_production_status)) return false;
-            return styles.some(sc => styleColorMatches(r, sc));
-          });
-          // Fallback: if no style-color match, show all not-yet-shipped POs after target date
-          if (candidates.length === 0) {
-            candidates = realData.filter(r => {
-              if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
-              if (!isNotShippedStatus(r.po_production_status)) return false;
-              return true;
-            });
-          }
-        } else {
-          candidates = generateDemoCandidates('style', targetXfDate, styles);
-        }
-      } else if (mode === 'qty') {
-        const minQty = Number(document.getElementById('qty-input').value) || 0;
-        if (minQty <= 0) return [];
-        const preferred = parseStyleColorInput(document.getElementById('qty-style-input').value.trim());
-        if (useRealData && realData) {
-          const late = realData.filter(r => {
-            if (!r.conf_xf_date || r.conf_xf_date <= targetXfDate) return false;
-            if (!isNotShippedStatus(r.po_production_status)) return false;
-            return styleColorMatches(r, preferred);
-          }).sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || ''));
-          let sum = 0;
-          const selected = [];
-          for (const r of late) {
-            if (sum >= minQty) break;
-            selected.push(r);
-            sum += Number(r.po_qty) || 0;
-          }
-          candidates = selected;
-        } else {
-          candidates = generateDemoCandidates('qty', targetXfDate, null, minQty, preferred);
-        }
+    // ===== Style-Color sub-mode (split / combo) =====
+    let styleSubMode = 'split';
+    let qtySubMode = 'split';
+
+    function setSubModeButtons(prefix, subMode) {
+      const activeCls = 'entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all';
+      const inactiveCls = 'entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all';
+      const splitBtn = document.getElementById(prefix + '-submode-split');
+      const comboBtn = document.getElementById(prefix + '-submode-combo');
+      if (splitBtn) splitBtn.className = subMode === 'split' ? activeCls : inactiveCls;
+      if (comboBtn) comboBtn.className = subMode === 'combo' ? activeCls : inactiveCls;
+      document.querySelectorAll('.' + prefix + '-sub-split').forEach(el => el.classList.toggle('hidden', subMode !== 'split'));
+      document.querySelectorAll('.' + prefix + '-sub-combo').forEach(el => el.classList.toggle('hidden', subMode !== 'combo'));
+    }
+
+    function switchStyleSubMode(subMode) {
+      styleSubMode = subMode === 'combo' ? 'combo' : 'split';
+      setSubModeButtons('style', styleSubMode);
+      updateTargetMetrics();
+    }
+
+    function switchQtySubMode(subMode) {
+      qtySubMode = subMode === 'combo' ? 'combo' : 'split';
+      setSubModeButtons('qty', qtySubMode);
+      updateTargetMetrics();
+    }
+
+    // Split comma/newline-separated input into normalized lowercase tokens.
+    function parseMulti(text) {
+      if (!text) return [];
+      return String(text).split(/[,\n]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    }
+
+    // Row matches when (style tokens empty OR style_number/style_name matches any token)
+    // AND (color tokens empty OR color_code matches any token).
+    function rowMatchesStyleColor(row, styleTokens, colorTokens) {
+      const rowStyleName = String(row.style_name || '').toLowerCase().trim();
+      const rowStyleNumber = String(row.style_number || '').toLowerCase().trim();
+      const rowColor = String(row.color_code || row.color || '').toLowerCase().trim();
+      const styleMatch = !styleTokens || styleTokens.length === 0 || styleTokens.some(t =>
+        rowStyleNumber === t || rowStyleName === t || rowStyleNumber.includes(t) || rowStyleName.includes(t));
+      const colorMatch = !colorTokens || colorTokens.length === 0 || colorTokens.some(t =>
+        rowColor === t || rowColor.includes(t));
+      return styleMatch && colorMatch;
+    }
+
+    // Build a matcher for the given prefix ('style' or 'qty') based on its current sub-mode.
+    // Returns null when all inputs are empty (caller decides: style = required alert, qty = match all).
+    function getStyleColorMatcher(prefix) {
+      const subMode = prefix === 'qty' ? qtySubMode : styleSubMode;
+      if (subMode === 'combo') {
+        const comboEl = document.getElementById(prefix + '-combo-input');
+        const text = comboEl ? comboEl.value.trim() : '';
+        const parsed = text.split(/[\n,]+/).map(s => parseStyleColorInput(s)).filter(sc => sc && (sc.style || sc.color));
+        if (parsed.length === 0) return null;
+        return row => parsed.some(sc => styleColorMatches(row, sc));
       }
-      return candidates.map((r, i) => ({ ...r, id: r.id || ('CAND-' + i) }));
+      const styleInputId = prefix === 'qty' ? 'qty-style-number-input' : 'style-number-input';
+      const colorInputId = prefix === 'qty' ? 'qty-color-code-input' : 'color-code-input';
+      const styleEl = document.getElementById(styleInputId);
+      const colorEl = document.getElementById(colorInputId);
+      const styleTokens = parseMulti(styleEl ? styleEl.value : '');
+      const colorTokens = parseMulti(colorEl ? colorEl.value : '');
+      if (styleTokens.length === 0 && colorTokens.length === 0) return null;
+      return row => rowMatchesStyleColor(row, styleTokens, colorTokens);
+    }
+
+    // Split all open (not-yet-shipped) POs matching the given matcher into
+    // "before" (Conf XF <= target, about to ship) and "after" (Conf XF > target, pull-in candidates).
+    // matchFn === null matches all rows.
+    function splitOpenPOsByDate(matchFn, targetXfDate) {
+      const before = [];
+      const after = [];
+      (realData || []).forEach(r => {
+        if (!r.conf_xf_date) return;
+        if (!isNotShippedStatus(r.po_production_status)) return;
+        if (matchFn && !matchFn(r)) return;
+        if (r.conf_xf_date <= targetXfDate) before.push(r);
+        else after.push(r);
+      });
+      const withId = (r, i) => ({ ...r, id: r.id || ('CAND-' + i) });
+      return { before: before.map(withId), after: after.map(withId) };
+    }
+
+    // Last rendered Supply Overview rows (used by the PO detail modal).
+    let lastSupplyBefore = [];
+    let lastSupplyAfter = [];
+
+    // Render the Supply Overview section: two clickable summary cards.
+    function renderSupplyOverview(before, after, targetXfDate) {
+      const section = document.getElementById('supply-overview-section');
+      if (!section) return;
+      section.classList.remove('hidden');
+
+      lastSupplyBefore = before || [];
+      lastSupplyAfter = after || [];
+
+      const sumQty = rows => rows.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+      const countPOs = rows => new Set(rows.map(r => r.po_number).filter(Boolean)).size;
+      document.getElementById('before-qty').textContent = sumQty(lastSupplyBefore).toLocaleString();
+      document.getElementById('before-count').textContent = countPOs(lastSupplyBefore).toLocaleString();
+      document.getElementById('after-qty').textContent = sumQty(lastSupplyAfter).toLocaleString();
+      document.getElementById('after-count').textContent = countPOs(lastSupplyAfter).toLocaleString();
+    }
+
+    // ===== Supply PO detail modal =====
+    function escapeSupplyHtml(v) {
+      return String(v == null ? '-' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    let supplyModalRows = [];
+
+    function openSupplyPOListModal(side) {
+      const modal = document.getElementById('supply-po-modal');
+      const titleEl = document.getElementById('supply-po-modal-title');
+      const subtitleEl = document.getElementById('supply-po-modal-subtitle');
+      if (!modal || !document.getElementById('supply-po-modal-body')) return;
+      const rows = (side === 'before' ? lastSupplyBefore : lastSupplyAfter).slice()
+        .sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || '') ||
+          String(a.po_number || '').localeCompare(String(b.po_number || '')));
+      if (titleEl) titleEl.textContent = side === 'before' ? '交期前待出货 PO 明细' : '交期后可 Pull-in PO 明细';
+      const totalQty = rows.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+      const poCount = new Set(rows.map(r => r.po_number).filter(Boolean)).size;
+      if (subtitleEl) subtitleEl.textContent = `${poCount} POs · ${totalQty.toLocaleString()} pairs`;
+      supplyModalRows = rows;
+      supplyModalPage = 1;
+      renderSupplyModalBody();
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderSupplyModalBody() {
+      const body = document.getElementById('supply-po-modal-body');
+      if (!body) return;
+      const rows = supplyModalRows;
+      const groups = groupRowsByPO(rows, r => String(r.po_number || '-') + '|' + String(r.style_number || '-') + '|' + String(r.color_code || '-'));
+      if (groups.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400">无符合条件的 PO</td></tr>';
+      } else {
+        const spPages = Math.max(1, Math.ceil(groups.length / TABLE_PAGE_SIZE));
+        if (supplyModalPage > spPages) supplyModalPage = spPages;
+        const start = (supplyModalPage - 1) * TABLE_PAGE_SIZE;
+        let html = '';
+        groups.slice(start, start + TABLE_PAGE_SIZE).forEach((g, i) => {
+          const gi = start + i;
+          const items = g.items;
+          const first = items[0];
+          const sumQty = items.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
+          const sumFg = items.reduce((s, r) => s + (Number(r.fg_inventory) || 0), 0);
+          if (items.length === 1) {
+            html += `
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-2 text-sm text-gray-900 font-medium whitespace-nowrap"><span class="inline-block w-4 mr-1.5"></span>${escapeSupplyHtml(first.po_number)}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.style_number)}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.color_code)}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.size)}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.conf_xf_date)}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.po_production_status)}</td>
+                <td class="px-4 py-2 text-sm text-gray-900 text-right whitespace-nowrap">${sumQty.toLocaleString()}</td>
+                <td class="px-4 py-2 text-sm text-gray-700 text-right whitespace-nowrap">${sumFg.toLocaleString()}</td>
+              </tr>`;
+            return;
+          }
+          const cls = 'sz-sp-' + gi;
+          const isOpen = expandedSupplyGroups.has(g.key);
+          html += `
+            <tr class="po-group-row hover:bg-gray-50" onclick="toggleGroupRowsTracked(this, '${cls}', expandedSupplyGroups, '${jsStr(g.key)}')">
+              <td class="px-4 py-2 text-sm text-gray-900 font-medium whitespace-nowrap"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg(isOpen ? 'open' : '')}${escapeSupplyHtml(first.po_number)}</span></td>
+              <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.style_number)}</td>
+              <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.color_code)}</td>
+              <td class="px-4 py-2 text-sm text-gray-400 text-xs whitespace-nowrap">${items.length} sizes</td>
+              <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.conf_xf_date)}</td>
+              <td class="px-4 py-2 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(first.po_production_status)}</td>
+              <td class="px-4 py-2 text-sm text-gray-900 text-right whitespace-nowrap">${sumQty.toLocaleString()}</td>
+              <td class="px-4 py-2 text-sm text-gray-700 text-right whitespace-nowrap">${sumFg.toLocaleString()}</td>
+            </tr>`;
+          items.forEach(r => {
+            html += `
+              <tr class="size-detail-row ${cls} ${isOpen ? '' : 'hidden'}">
+                <td class="px-4 py-1.5 pl-9 text-sm text-gray-400 whitespace-nowrap">↳</td>
+                <td class="px-4 py-1.5 text-sm"></td>
+                <td class="px-4 py-1.5 text-sm"></td>
+                <td class="px-4 py-1.5 text-sm text-gray-700 whitespace-nowrap">${escapeSupplyHtml(r.size)}</td>
+                <td class="px-4 py-1.5 text-sm text-gray-500 whitespace-nowrap">${escapeSupplyHtml(r.conf_xf_date)}</td>
+                <td class="px-4 py-1.5 text-sm text-gray-500 whitespace-nowrap">${escapeSupplyHtml(r.po_production_status)}</td>
+                <td class="px-4 py-1.5 text-sm text-gray-700 text-right whitespace-nowrap">${(Number(r.po_qty) || 0).toLocaleString()}</td>
+                <td class="px-4 py-1.5 text-sm text-gray-700 text-right whitespace-nowrap">${(Number(r.fg_inventory) || 0).toLocaleString()}</td>
+              </tr>`;
+          });
+        });
+        body.innerHTML = html;
+      }
+      renderPager(document.getElementById('supply-po-modal-pager'), groups.length, supplyModalPage, TABLE_PAGE_SIZE, p => { supplyModalPage = p; renderSupplyModalBody(); });
+    }
+
+    function closeSupplyPOModal() {
+      const modal = document.getElementById('supply-po-modal');
+      if (modal) modal.classList.add('hidden');
+      document.body.style.overflow = '';
     }
 
     let candidateGroupsCache = [];
@@ -3834,10 +4272,16 @@
       if (candidateItems.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" class="px-3 py-6 text-center text-gray-400 text-sm">No candidate POs found</td></tr>';
         candidateGroupsCache = [];
+        renderPager(document.getElementById('candidate-pager'), 0, 1, TABLE_PAGE_SIZE, () => {});
       } else {
         candidateGroupsCache = groupRowsByPO(candidateItems, c => (c.po_number + '|' + (c.style_name || c.style_number || '') + '|' + (c.color_code || '')));
+        const cPages = Math.max(1, Math.ceil(candidateGroupsCache.length / TABLE_PAGE_SIZE));
+        if (candidatePage > cPages) candidatePage = cPages;
+        const cStart = (candidatePage - 1) * TABLE_PAGE_SIZE;
+        const pageGroups = candidateGroupsCache.slice(cStart, cStart + TABLE_PAGE_SIZE);
         let html = '';
-        candidateGroupsCache.forEach((g, gi) => {
+        pageGroups.forEach((g, i) => {
+          const gi = cStart + i;
           const items = g.items;
           const first = items[0];
           const shortageOf = r => (r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0)));
@@ -3898,8 +4342,9 @@
           });
         });
         tbody.innerHTML = html;
-        // Restore indeterminate state for partially selected groups
-        candidateGroupsCache.forEach((g, gi) => {
+        // Restore indeterminate state for partially selected groups (current page)
+        pageGroups.forEach((g, i) => {
+          const gi = cStart + i;
           const cb = tbody.querySelector('input[data-group-idx="' + gi + '"]');
           if (cb) {
             const some = g.items.some(r => selectedCandidateIds.has(r.id));
@@ -3907,8 +4352,14 @@
             cb.indeterminate = some && !all;
           }
         });
+        renderPager(document.getElementById('candidate-pager'), candidateGroupsCache.length, candidatePage, TABLE_PAGE_SIZE, p => { candidatePage = p; renderCandidateTable(); });
       }
-      if (selectAll) selectAll.checked = candidateItems.length > 0 && selectedCandidateIds.size === candidateItems.length;
+      // Select-all applies to the current page only
+      if (selectAll) {
+        const cStart2 = (candidatePage - 1) * TABLE_PAGE_SIZE;
+        const pageGroups2 = candidateGroupsCache.slice(cStart2, cStart2 + TABLE_PAGE_SIZE);
+        selectAll.checked = pageGroups2.length > 0 && pageGroups2.every(g => g.items.every(r => selectedCandidateIds.has(r.id)));
+      }
       updateCandidateSummary();
     }
 
@@ -3953,8 +4404,14 @@
     }
 
     function toggleAllCandidates(checked) {
-      if (checked) candidateItems.forEach(r => selectedCandidateIds.add(r.id));
-      else selectedCandidateIds.clear();
+      // Select-all applies to the current page only
+      const cStart = (candidatePage - 1) * TABLE_PAGE_SIZE;
+      candidateGroupsCache.slice(cStart, cStart + TABLE_PAGE_SIZE).forEach(g => {
+        g.items.forEach(r => {
+          if (checked) selectedCandidateIds.add(r.id);
+          else selectedCandidateIds.delete(r.id);
+        });
+      });
       renderCandidateTable();
     }
 
@@ -3966,26 +4423,7 @@
         alert('请至少选择一个 PO');
         return;
       }
-      if (useRealData) {
-        buildRealScenario(selected, '');
-      } else {
-        targetItems = selected.map((r, i) => ({
-          id: 'T' + i,
-          po: 'PO#' + r.po_number,
-          projectType: r.factory_project_type || 'CO',
-          style: r.style_name || String(r.style_number),
-          color: r.color_code,
-          size: String(r.size).trim(),
-          xfDate: r.conf_xf_date,
-          demand: Number(r.po_qty) || 0,
-          fg: Number(r.fg_inventory) || 0,
-          shortage: r.shortage || Math.max(0, (Number(r.po_qty) || 0) - (Number(r.fg_inventory) || 0))
-        }));
-        generateInventorySources();
-        renderPOTable();
-        updateTargetCountsFromItems();
-        updateGapDisplay();
-      }
+      buildRealScenario(selected, '');
       document.getElementById('candidate-section').classList.add('hidden');
       document.getElementById('gap-section').classList.remove('hidden');
       document.getElementById('po-status-section').classList.remove('hidden');
@@ -4000,6 +4438,8 @@
     }
 
     function loadScenario() {
+      candidatePage = 1;
+      poStatusPage = 1;
       // Reset option UI so allocations start fresh
       ['opt1', 'opt2', 'opt3', 'opt4'].forEach(opt => {
         const check = document.getElementById(opt + '-check');
@@ -4012,42 +4452,86 @@
       deselectedOpt3POs.clear();
       deselectedOpt4POs.clear();
       document.getElementById('candidate-section').classList.add('hidden');
-
-      if (entryMode === 'style' || entryMode === 'qty') {
-        const targetXfDate = document.getElementById('request-xf-date').value;
-        if (!targetXfDate) {
-          alert('请在 Target XF Date 中填写目标日期');
-          return;
-        }
-        const candidates = findCandidates(entryMode);
-        if (candidates.length === 0) {
-          const loadedRows = (useRealData && realData) ? realData.length : 0;
-          const hint = useRealData
-            ? `（已加载 ${loadedRows.toLocaleString()} 行，请检查 Target XF Date 是否早于数据日期，或 Style-Color 是否匹配）`
-            : '（请检查 Target XF Date 是否填写，或尝试 Quantity 模式）';
-          alert('未找到符合条件的候选 PO\n' + hint);
-          return;
-        }
-        candidateItems = candidates;
-        selectedCandidateIds = new Set(candidates.map(c => c.id));
-        renderCandidateTable();
+      const supplySection = document.getElementById('supply-overview-section');
+      if (supplySection) supplySection.classList.add('hidden');
+      const hideDownstream = () => {
         ['gap-section', 'po-status-section', 'options-section', 'allocation-section', 'summary-section'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.classList.add('hidden');
         });
+      };
+
+      if (entryMode === 'style') {
+        const targetXfDate = document.getElementById('request-xf-date').value;
+        if (!targetXfDate) {
+          alert('请在「Expected XF date」中选择日期');
+          return;
+        }
+        const matcher = getStyleColorMatcher('style');
+        if (!matcher) {
+          alert('请填写 Style Number / Color Code');
+          return;
+        }
+        const { before, after } = splitOpenPOsByDate(matcher, targetXfDate);
+        renderSupplyOverview(before, after, targetXfDate);
+        hideDownstream();
+        if (after.length === 0) {
+          // before+after both empty: empty state already shown by renderSupplyOverview;
+          // otherwise all open POs ship before the target date, so nothing needs pull-in.
+          candidateItems = [];
+          selectedCandidateIds = new Set();
+          return;
+        }
+        candidateItems = after;
+        selectedCandidateIds = new Set(); // default: none selected; user picks POs manually
+        const csEl = document.getElementById('candidate-subtitle');
+        if (csEl) csEl.textContent = `共 ${new Set(after.map(r => r.po_number)).size} 个 PO 的 Conf XF 晚于 Expected XF date（需要提前的订单）；勾选后进入缺口分析`;
+        renderCandidateTable();
         document.getElementById('candidate-section').classList.remove('hidden');
         return;
       }
 
-      if (useRealData && realData) {
-        buildRealScenario();
-      } else {
-        updateTargetMetrics();
-        updateGapDisplay();
-        renderDemandPOStatus();
-        updateTargetCountsFromItems();
-        generateInventorySources();
+      if (entryMode === 'qty') {
+        const targetXfDate = document.getElementById('request-xf-date').value;
+        if (!targetXfDate) {
+          alert('请在「Expected XF date」中选择日期');
+          return;
+        }
+        const expectedQty = Number(document.getElementById('qty-input').value) || 0;
+        if (expectedQty <= 0) {
+          alert('请填写大于 0 的 Expected Qty');
+          return;
+        }
+        const matcher = getStyleColorMatcher('qty'); // null = 不限 Style-Color，匹配全部
+        const { before, after } = splitOpenPOsByDate(matcher, targetXfDate);
+        renderSupplyOverview(before, after, targetXfDate);
+        hideDownstream();
+        if (after.length === 0) {
+          // 总览卡已呈现 0，无需 alert，也不展示候选区
+          candidateItems = [];
+          selectedCandidateIds = new Set();
+          return;
+        }
+        // 按 Conf XF 从近到远依次累加，直到覆盖 Expected Qty（至少取 1 条）
+        const sorted = after.slice().sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || ''));
+        const candidates = [];
+        let coveredQty = 0;
+        for (const r of sorted) {
+          if (candidates.length > 0 && coveredQty >= expectedQty) break;
+          candidates.push(r);
+          coveredQty += Number(r.po_qty) || 0;
+        }
+        candidateItems = candidates;
+        // 系统按需求量推荐的集合，默认勾选，可手动调整
+        selectedCandidateIds = new Set(candidates.map(r => r.id));
+        const csEl = document.getElementById('candidate-subtitle');
+        if (csEl) csEl.textContent = `按交期从近到远选取，累计 ${coveredQty.toLocaleString()} pairs 覆盖 Expected Qty ${expectedQty.toLocaleString()}；可手动调整`;
+        renderCandidateTable();
+        document.getElementById('candidate-section').classList.remove('hidden');
+        return;
       }
+
+      buildRealScenario();
       applyOptionStrategies();
       resetAllocations();
       renderOptionCards();
@@ -4061,7 +4545,7 @@
       recalc();
     }
 
-    // ===== Real Data Integration =====
+    // ===== Embedded Data Helpers =====
     function toISODate(value) {
       if (!value) return '';
       if (value instanceof Date && !isNaN(value)) return value.toISOString().slice(0, 10);
@@ -4143,89 +4627,6 @@
         cross_region: toNum('cross_region'),
         factory_project_type: toStr('factory_project_type')
       };
-    }
-
-    function parseExcelArrayBuffer(arrayBuffer) {
-      if (typeof XLSX === 'undefined') throw new Error('Excel library not loaded');
-      const data = new Uint8Array(arrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-      return rows.map(normalizeRealDataRow);
-    }
-
-    function handleRealDataFile(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const status = document.getElementById('real-data-status');
-      const clearBtn = document.getElementById('clear-real-data-btn');
-      status.textContent = 'Loading...';
-      const ext = file.name.split('.').pop().toLowerCase();
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          let rows;
-          if (ext === 'xlsx') {
-            rows = parseExcelArrayBuffer(e.target.result);
-          } else {
-            rows = JSON.parse(e.target.result);
-            if (!Array.isArray(rows)) throw new Error('JSON must be an array of rows');
-            rows = rows.map(normalizeRealDataRow);
-          }
-          // Drop header-like rows
-          realData = rows.filter(r => r.po_number && String(r.po_number).toLowerCase() !== 'po_number');
-          useRealData = true;
-          status.textContent = `Loaded ${realData.length.toLocaleString()} rows`;
-          clearBtn.disabled = false;
-          // Auto-fit date range to data
-          const dates = realData.map(r => r.conf_xf_date).filter(Boolean).sort();
-          if (dates.length) {
-            document.getElementById('xf-from').value = dates[0];
-            document.getElementById('xf-to').value = dates[dates.length - 1];
-          }
-          // Auto-fit region if uniform
-          const regions = [...new Set(realData.map(r => r.target_region).filter(Boolean))];
-          if (regions.length === 1) {
-            document.getElementById('target-region').value = regions[0];
-            document.getElementById('target-region-display').textContent = regions[0];
-          }
-
-          // Auto-run the scenario so the loaded data is immediately reflected
-          if (entryMode === 'po' || document.getElementById('request-xf-date').value) {
-            loadScenario();
-          }
-        } catch (err) {
-          status.textContent = 'Failed: ' + (err.message || 'unknown error');
-          console.error(err);
-        }
-      };
-      reader.onerror = function() {
-        status.textContent = 'Failed: could not read file';
-      };
-      if (ext === 'xlsx') {
-        reader.readAsArrayBuffer(file);
-      } else {
-        reader.readAsText(file);
-      }
-    }
-
-    function clearRealData() {
-      realData = null;
-      sourcePOData = null;
-      crossRegionSourcePOData = null;
-      useRealData = false;
-      candidateItems = [];
-      selectedCandidateIds.clear();
-      document.getElementById('real-data-status').textContent = 'Using demo data';
-      document.getElementById('real-data-file').value = '';
-      document.getElementById('clear-real-data-btn').disabled = true;
-      document.getElementById('xf-from').value = '2026-08-01';
-      document.getElementById('xf-to').value = '2026-10-31';
-      document.getElementById('target-region').value = 'EMEA';
-      document.getElementById('target-region-display').textContent = 'EMEA';
-      const candidateSection = document.getElementById('candidate-section');
-      if (candidateSection) candidateSection.classList.add('hidden');
     }
 
     function buildRealScenario(rowsOverride, noteOverride) {
@@ -4427,9 +4828,7 @@
     }
 
     function applyOptionStrategies() {
-      const requestDateInput = document.getElementById('request-xf-date').value;
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const cutoffStrategy2 = addDays(requestDateInput || todayStr, 14);
+      const cutoffStrategy2 = getStrategy2Range().cutoff;
       inventorySources.forEach(s => {
         if (s.sourceType !== 'same-region' && s.sourceType !== 'cross-region') return;
         const strategy = s.sourceType === 'same-region' ? opt3Strategy : opt4Strategy;
@@ -4571,7 +4970,7 @@
       // Update breakdown table
       updateBreakdown(opt1, opt2, opt3, opt3Cost, opt4, opt4Cost, wipRepackCost, totalRepackCost);
 
-      // Update strategy-specific impact analysis
+      // Update potential impact analysis (all options)
       updateStrategyImpact();
 
       // Update option cards and allocation matrix
@@ -4665,8 +5064,29 @@
       const totalPairs = (sources) => sources.reduce((sum, s) => sum + (s.originalQty || s.qty || 0), 0);
 
       const cards = [];
+      const opt1Checked = document.getElementById('opt1-check').checked;
+      const opt2Checked = document.getElementById('opt2-check').checked;
       const opt3Checked = document.getElementById('opt3-check').checked;
       const opt4Checked = document.getElementById('opt4-check').checked;
+
+      // Option 1/2: FG re-prioritization — summary only; before/after deduction
+      // order comparison lives in the "View full PO list" modal (two tabs).
+      const poolCard = (opt, type, label, colors) => {
+        const groups = buildReservedGroups(type);
+        if (!groups.length) return;
+        const total = groups.reduce((x, g) => x + reservedGroupTotals(g).qty, 0);
+        cards.push(`
+          <div class="${colors.wrap} rounded-lg p-3">
+            <div class="text-xs font-semibold ${colors.title} mb-1">${label}（抵扣优先级调整）</div>
+            <div class="text-sm ${colors.text}">本次共抵扣 ${total.toLocaleString()} pairs。该库存原计划按交期升序抵扣给 ${groups.length} 个 PO，本次 Pull-in 将 Target PO 调整至抵扣顺序最前、优先抵扣。</div>
+            <div class="mt-2">
+              <button type="button" onclick="openReservedPOModal('${opt}')" class="text-xs font-medium ${colors.link} underline">View full PO list · 对比变化前后抵扣顺序</button>
+            </div>
+          </div>
+        `);
+      };
+      if (opt1Checked) poolCard('opt1', 'c-order', 'Option 1 — C-order FG', { wrap: 'bg-blue-50 border border-blue-200', title: 'text-blue-800', text: 'text-blue-700', link: 'text-blue-700 hover:text-blue-900' });
+      if (opt2Checked) poolCard('opt2', 'preload', 'Option 2 — Preload FG', { wrap: 'bg-green-50 border border-green-200', title: 'text-green-800', text: 'text-green-700', link: 'text-green-700 hover:text-green-900' });
 
       if (opt3Checked) {
         const strategy = opt3Strategy;
@@ -4905,6 +5325,9 @@
       if (tab === 'schemes') renderSchemeList();
       if (tab === 'execution') renderExecutionTab();
       if (tab === 'result') renderResultTab();
+      // Elevator nav only on Insight Detail tab ('hidden' stays; md:flex controls md+ visibility)
+      const elevator = document.getElementById('elevator-nav');
+      if (elevator) elevator.classList.toggle('md:flex', tab === 'detail');
     }
 
     function updateRoleAndTabUI() {
@@ -4923,6 +5346,12 @@
       schemes.push(scheme);
       currentSchemeId = scheme.id;
       loadSchemeIntoUI(scheme);
+      // Clear downstream analysis sections for a fresh insight
+      ['candidate-section', 'supply-overview-section', 'gap-section', 'po-status-section',
+        'options-section', 'allocation-section', 'summary-section'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
       switchTab('detail');
     }
 
@@ -4930,7 +5359,8 @@
       return {
         id: generateSchemeId(),
         name: '',
-        createdAt: new Date().toISOString().slice(0, 10),
+        creator: 'J.Wong',
+        createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
         status: 'Draft',
         notes: '',
         entryMode: 'po',
@@ -4999,10 +5429,16 @@
       document.getElementById('scheme-id-display').textContent = scheme.id;
 
       document.getElementById('po-list-input').value = scheme.poList || '';
-      document.getElementById('style-input').value = scheme.entryMode === 'style' ? (scheme.styleInput || '') : '';
-      document.getElementById('qty-style-input').value = scheme.entryMode === 'qty' ? (scheme.qtyStyleInput || '') : '';
+      const setInputVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+      setInputVal('style-number-input', scheme.styleNumberInput);
+      setInputVal('color-code-input', scheme.colorCodeInput);
+      setInputVal('style-combo-input', scheme.styleComboInput);
+      setInputVal('qty-style-number-input', scheme.qtyStyleNumberInput);
+      setInputVal('qty-color-code-input', scheme.qtyColorCodeInput);
+      setInputVal('qty-combo-input', scheme.qtyComboInput);
+      switchStyleSubMode(scheme.styleSubMode === 'combo' ? 'combo' : 'split');
+      switchQtySubMode(scheme.qtySubMode === 'combo' ? 'combo' : 'split');
       document.getElementById('qty-input').value = scheme.qtyInput || '';
-      document.getElementById('style-qty-input').value = scheme.styleQtyInput || '';
       document.getElementById('xf-from').value = scheme.xfFrom || '2026-08-01';
       document.getElementById('xf-to').value = scheme.xfTo || '2026-10-31';
       document.getElementById('request-xf-date').value = scheme.requestXfDate || '';
@@ -5023,10 +5459,17 @@
         selectDeferredDays(scheme.deferredDays);
       }
 
-      // Generate target items and sources
-      renderDemandPOStatus();
-      updateTargetCountsFromItems();
-      generateInventorySources();
+      // Generate target items and sources from embedded data
+      if (realData && realData.length > 0) {
+        buildRealScenario();
+      } else {
+        targetItems = [];
+        inventorySources = [];
+        renderPOTable();
+        updateTargetCountsFromItems();
+      }
+      const supplySection = document.getElementById('supply-overview-section');
+      if (supplySection) supplySection.classList.add('hidden');
       resetAllocations();
 
       // Restore allocations if saved
@@ -5068,6 +5511,14 @@
       recalc();
       updateActionButtons();
       updateReadOnlyState();
+      updateDetailInsightName();
+    }
+
+    function updateDetailInsightName() {
+      const el = document.getElementById('detail-insight-name');
+      if (!el) return;
+      const s = getCurrentScheme();
+      el.textContent = s ? (s.name || '(Untitled)') : '(Untitled)';
     }
 
     function saveUItoScheme() {
@@ -5078,10 +5529,16 @@
       scheme.notes = document.getElementById('scheme-notes-input').value.trim();
       scheme.entryMode = entryMode;
       scheme.poList = document.getElementById('po-list-input').value;
-      scheme.styleInput = document.getElementById('style-input').value;
-      scheme.qtyStyleInput = document.getElementById('qty-style-input').value;
+      const getInputVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+      scheme.styleSubMode = styleSubMode;
+      scheme.styleNumberInput = getInputVal('style-number-input');
+      scheme.colorCodeInput = getInputVal('color-code-input');
+      scheme.styleComboInput = getInputVal('style-combo-input');
+      scheme.qtySubMode = qtySubMode;
+      scheme.qtyStyleNumberInput = getInputVal('qty-style-number-input');
+      scheme.qtyColorCodeInput = getInputVal('qty-color-code-input');
+      scheme.qtyComboInput = getInputVal('qty-combo-input');
       scheme.qtyInput = document.getElementById('qty-input').value;
-      scheme.styleQtyInput = document.getElementById('style-qty-input').value;
       scheme.targetRegion = document.getElementById('target-region').value;
       scheme.xfFrom = document.getElementById('xf-from').value;
       scheme.xfTo = document.getElementById('xf-to').value;
@@ -5160,16 +5617,15 @@
       empty.classList.add('hidden');
 
       tbody.innerHTML = displaySchemes.map(s => {
-        const primaryRegion = (s.targetRegion || 'EMEA').split(',')[0];
         const actions = [];
-        actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3">Edit</button>`);
+        actions.push(`<button onclick="editScheme('${s.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-medium">View / Edit</button>`);
 
         return `
           <tr class="hover:bg-gray-50 transition-colors">
             <td class="px-4 py-3 text-xs text-gray-500">${s.id}</td>
             <td class="px-4 py-3 font-medium text-gray-900">${s.name || '(Untitled)'}</td>
-            <td class="px-4 py-3 text-gray-600">${primaryRegion}</td>
-            <td class="px-4 py-3 text-right font-medium text-gray-900">${(s.gap || 0).toLocaleString()}</td>
+            <td class="px-4 py-3 text-gray-600">${s.creator || '-'}</td>
+            <td class="px-4 py-3 text-right font-medium text-gray-900">${(s.totalDemand || 0).toLocaleString()}</td>
             <td class="px-4 py-3 text-xs text-gray-500">${s.createdAt}</td>
             <td class="px-4 py-3">${actions.join('')}</td>
           </tr>
@@ -5236,11 +5692,31 @@
       }
     }
 
-    // Save button on Insight Detail page: creates an insight on first save
+    // Save button on Insight Detail page: opens a name-confirmation modal first
     function saveCurrentInsight() {
       const prev = getCurrentScheme();
-      const isNew = !prev;
-      const keepName = prev ? prev.name : ''; // name field lives in the hidden header; never clobber it here
+      const region = ((prev && prev.targetRegion) || document.getElementById('target-region').value || 'EMEA').split(',')[0];
+      const date = new Date().toISOString().slice(0, 10);
+      const defaultName = (prev && prev.name) ? prev.name : region + ' Pull-in Insight ' + date;
+      const modal = document.getElementById('save-name-modal');
+      if (!modal) return;
+      modal.dataset.defaultName = defaultName;
+      document.getElementById('save-name-input').value = defaultName;
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSaveNameModal() {
+      const modal = document.getElementById('save-name-modal');
+      if (modal) modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function confirmSaveInsight() {
+      const modal = document.getElementById('save-name-modal');
+      const typed = (document.getElementById('save-name-input').value || '').trim();
+      const name = typed || (modal ? modal.dataset.defaultName : '') || 'Untitled Insight';
+      const isNew = !getCurrentScheme();
       if (isNew) {
         const scheme = createNewSchemeData();
         schemes.push(scheme);
@@ -5248,12 +5724,11 @@
       }
       saveUItoScheme();
       const scheme = getCurrentScheme();
-      if (isNew) {
-        const region = (scheme.targetRegion || 'EMEA').split(',')[0];
-        scheme.name = region + ' Pull-in Insight ' + scheme.createdAt;
-      } else if (keepName) {
-        scheme.name = keepName;
-      }
+      scheme.name = name;
+      const nameInput = document.getElementById('scheme-name-input');
+      if (nameInput) nameInput.value = name; // keep hidden name field in sync
+      closeSaveNameModal();
+      updateDetailInsightName();
       renderSchemeList();
       alert(`Insight "${scheme.name}" saved.`);
     }
@@ -5618,6 +6093,7 @@
       // Sample 1: Draft scheme for SPT to work on
       const sample1 = createNewSchemeData();
       sample1.name = 'EMEA July Pull-forward Demo';
+      sample1.creator = 'J.Wong';
       sample1.status = 'Draft';
       sample1.gap = sample1.totalDemand - sample1.ownPoFg;
       schemes.push(sample1);
@@ -5626,9 +6102,10 @@
       const sample2 = createNewSchemeData();
       sample2.id = 'INS-' + String(Date.now() + 1).slice(-6);
       sample2.name = 'APAC June Urgent Replenish';
+      sample2.creator = 'A.Chen';
       sample2.status = 'Completed';
       sample2.targetRegion = 'APAC';
-      sample2.createdAt = new Date().toISOString().slice(0, 10);
+      sample2.createdAt = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 16).replace('T', ' ');
       sample2.gap = sample2.totalDemand - sample2.ownPoFg;
       sample2.execution = {
         actuals: { opt1: 0, opt2: 0, opt3: 0, opt4: 0 },
@@ -5640,15 +6117,11 @@
       currentSchemeId = sample1.id;
       loadSchemeIntoUI(sample1);
 
-      // Auto-load the default real-data demo on first load
+      // Load the embedded default dataset on first load
       if (typeof DEFAULT_DEMO_DATA !== 'undefined' && DEFAULT_DEMO_DATA.length > 0) {
         realData = DEFAULT_DEMO_DATA.map(normalizeRealDataRow);
         sourcePOData = (typeof DEFAULT_SOURCE_PO_DATA !== 'undefined') ? DEFAULT_SOURCE_PO_DATA.map(normalizeRealDataRow) : [];
         crossRegionSourcePOData = (typeof DEFAULT_CROSS_REGION_SOURCE_PO_DATA !== 'undefined') ? DEFAULT_CROSS_REGION_SOURCE_PO_DATA.map(normalizeRealDataRow) : [];
-        useRealData = true;
-        const sourceTotal = sourcePOData.length + crossRegionSourcePOData.length;
-        document.getElementById('real-data-status').textContent = `Loaded ${realData.length.toLocaleString()} target rows + ${sourceTotal.toLocaleString()} source POs (default demo)`;
-        document.getElementById('clear-real-data-btn').disabled = false;
         const dates = realData.map(r => r.conf_xf_date).filter(Boolean).sort();
         if (dates.length) {
           document.getElementById('xf-from').value = dates[0];
@@ -5658,7 +6131,7 @@
         loadScenario();
       }
 
-      switchTab('schemes');
+      switchTab('detail');
     }
 
     initApp();
@@ -5740,7 +6213,13 @@
         </div>
         <div class="px-6 pt-4">
           <div id="source-po-modal-note" class="hidden mb-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800"></div>
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div id="source-po-modal-tabs" class="hidden mb-1 border-b border-gray-200">
+            <div class="flex space-x-5">
+              <button type="button" id="reserved-tab-before" onclick="switchReservedModalTab('before')" class="px-1 pb-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">变化前 · 原计划抵扣顺序</button>
+              <button type="button" id="reserved-tab-after" onclick="switchReservedModalTab('after')" class="px-1 pb-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600 transition-colors">变化后 · 本次 Pull-in 抵扣顺序</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3 mt-2">
             <div id="source-po-modal-filter" class="hidden flex-wrap items-center gap-1.5"></div>
             <div class="text-xs text-gray-500" id="source-po-modal-summary"></div>
           </div>
@@ -5752,6 +6231,7 @@
             </thead>
             <tbody id="source-po-modal-body" class="divide-y divide-gray-100"></tbody>
           </table>
+          <div id="source-po-modal-pager"></div>
         </div>
         <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
           <button onclick="closeSourcePOModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg">Close</button>
@@ -5759,5 +6239,75 @@
       </div>
     </div>
   </div>
+
+  <div id="supply-po-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSupplyPOModal()"></div>
+    <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col pointer-events-auto">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 class="font-bold text-gray-900" id="supply-po-modal-title">PO 明细</h3>
+            <p class="text-xs text-gray-500 mt-0.5" id="supply-po-modal-subtitle"></p>
+          </div>
+          <button onclick="closeSupplyPOModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="px-6 py-4 overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 sticky top-0">
+              <tr>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">PO</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Style</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Color</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Size</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Conf XF</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 whitespace-nowrap">Production Status</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 whitespace-nowrap">PO Qty</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 whitespace-nowrap">FG Inventory</th>
+              </tr>
+            </thead>
+            <tbody id="supply-po-modal-body" class="divide-y divide-gray-100"></tbody>
+          </table>
+          <div id="supply-po-modal-pager"></div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <button onclick="closeSupplyPOModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="save-name-modal" class="fixed inset-0 z-50 hidden" aria-modal="true">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSaveNameModal()"></div>
+    <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md pointer-events-auto">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="font-bold text-gray-900">Save Insight</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Confirm or edit the insight name before saving</p>
+        </div>
+        <div class="px-6 py-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Insight Name</label>
+          <input type="text" id="save-name-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. EMEA Pull-in Insight 2026-07-20">
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onclick="closeSaveNameModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Cancel</button>
+          <button onclick="confirmSaveInsight()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    lucide.createIcons();
+    function toggleDtdMenu() { document.body.classList.toggle('dtd-menu-collapsed'); }
+    function toggleDtdSubMenu(btn) {
+      const group = btn.closest('.dtd-menu-group');
+      if (!group) return;
+      const sub = group.querySelector('.dtd-submenu');
+      const willOpen = !group.classList.contains('open');
+      group.classList.toggle('open', willOpen);
+      if (sub) sub.classList.toggle('hidden', !willOpen);
+    }
+  </script>
 </body>
 </html>
