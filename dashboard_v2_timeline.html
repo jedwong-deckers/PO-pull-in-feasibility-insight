@@ -157,17 +157,6 @@
     </div>
   </header>
 
-  <!-- Tab Navigation -->
-  <nav class="bg-white border-b border-gray-200 sticky top-14 z-40">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="flex space-x-6" id="tab-nav">
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors" data-tab="schemes" onclick="switchTab('schemes')">Insights</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="execution" onclick="switchTab('execution')">Execution</button>
-        <button class="tab-btn px-1 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors hidden" data-tab="result" onclick="switchTab('result')">Result</button>
-      </div>
-    </div>
-  </nav>
-
   <!-- Elevator Navigation (visible only on Insight Detail tab, controlled by switchTab) -->
   <nav id="elevator-nav" class="fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-end gap-2">
     <button onclick="scrollToSection('demand-input-section')" class="group flex items-center gap-2 text-right">
@@ -270,23 +259,23 @@
         <h2 class="font-bold text-[14px] text-gray-900">Pull-in Request</h2>
       </div>
 
-      <!-- Entry Mode Switcher -->
+      <!-- Request Scenario Switcher -->
       <div class="mb-5">
         <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-          Entry Mode
+          Request scenario
           <span class="relative inline-block group">
             <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <div class="hidden group-hover:block absolute z-30 left-0 top-6 w-[720px] max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl p-4">
-              <div class="text-xs font-semibold text-gray-700 mb-2">Use case: which entry mode fits your request?</div>
+              <div class="text-xs font-semibold text-gray-700 mb-2">Use case: which scenario fits your request?</div>
               <div class="overflow-x-auto">
                 <table class="w-full text-[11px] border-collapse min-w-[640px]">
                   <thead>
                     <tr class="bg-gray-50 text-left text-gray-600">
                       <th class="px-2 py-1.5 border border-gray-200 font-medium">Sales trigger</th>
                       <th class="px-2 py-1.5 border border-gray-200 font-medium">Scenario description</th>
-                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.1 PO List</th>
-                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.2 Style-Color</th>
-                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">1.3 Quantity Only</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">By POs</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">By Style-Color</th>
+                      <th class="px-2 py-1.5 border border-gray-200 text-center font-medium w-20">By Quantity</th>
                     </tr>
                   </thead>
                   <tbody class="text-gray-700">
@@ -325,11 +314,17 @@
           </span>
         </label>
         <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-full md:w-fit">
-          <button id="entry-po" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchEntryMode('po')">1.1 PO List</button>
-          <button id="entry-style" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('style')">1.2 Style-Color</button>
-          <button id="entry-qty" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('qty')">1.3 Quantity Only</button>
+          <button id="entry-po" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchEntryMode('po')">1. Pull-in by specific POs</button>
+          <button id="entry-style" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('style')">2. Pull-in by style-color</button>
+          <button id="entry-qty" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchEntryMode('qty')">3. Pull-in by specific quantity</button>
         </div>
-        <p class="text-xs text-gray-500 mt-2" id="entry-mode-desc">Confirmed order range; pull orders by PO#</p>
+        <div class="flex items-center gap-1.5 mt-2">
+          <p class="text-xs text-gray-500" id="entry-mode-desc">Pull in by specific PO numbers</p>
+          <span class="relative group">
+            <svg class="w-3.5 h-3.5 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="hidden group-hover:block absolute left-0 top-5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20" id="entry-mode-desc-tip">Confirmed order range; pull in specific POs by PO#</span>
+          </span>
+        </div>
 
       </div>
 
@@ -339,8 +334,8 @@
           <div class="md:col-span-2 md:col-start-3 flex flex-wrap items-center gap-3">
             <label class="text-sm font-medium text-gray-700">Target Style-Color <span class="text-red-500 font-normal">*</span></label>
             <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-fit">
-              <button id="style-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchStyleSubMode('split')">分栏搜索 Style / Color</button>
-              <button id="style-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchStyleSubMode('combo')">组合批量搜索</button>
+              <button id="style-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchStyleSubMode('split')">Split (Style / Color)</button>
+              <button id="style-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchStyleSubMode('combo')">Combo (Batch)</button>
             </div>
           </div>
         </div>
@@ -350,8 +345,8 @@
           <div class="md:col-span-2 md:col-start-3 flex flex-wrap items-center gap-3">
             <label class="text-sm font-medium text-gray-700">Preferred Style-Color <span class="text-gray-400 font-normal">Optional</span></label>
             <div class="flex flex-wrap items-center gap-2 bg-gray-100 rounded-lg p-1 w-fit">
-              <button id="qty-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchQtySubMode('split')">分栏搜索 Style / Color</button>
-              <button id="qty-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchQtySubMode('combo')">组合批量搜索</button>
+              <button id="qty-submode-split" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchQtySubMode('split')">Split (Style / Color)</button>
+              <button id="qty-submode-combo" class="entry-mode-btn px-4 py-2 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchQtySubMode('combo')">Combo (Batch)</button>
             </div>
           </div>
         </div>
@@ -394,54 +389,54 @@
           </div>
           <input type="hidden" id="target-region" value="EMEA">
         </div>
-        <div id="xf-from-wrapper" class="flex flex-col">
-          <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (From)</label>
-          <input type="date" id="xf-from" value="2026-08-01" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-        </div>
-        <div id="xf-to-wrapper" class="flex flex-col">
-          <label class="block text-sm font-medium text-gray-700 mb-2">XF Date Range (To)</label>
-          <input type="date" id="xf-to" value="2026-10-31" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+        <div id="xf-range-wrapper" class="flex flex-col md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Conf XF Date</label>
+          <div class="flex items-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-500">
+            <input type="date" id="xf-from" value="2026-08-01" onchange="validateXfRange()" class="flex-1 min-w-0 border-none p-0 bg-transparent outline-none focus:ring-0 text-sm">
+            <span class="text-gray-400">–</span>
+            <input type="date" id="xf-to" value="2026-10-31" onchange="validateXfRange()" class="flex-1 min-w-0 border-none p-0 bg-transparent outline-none focus:ring-0 text-sm">
+          </div>
         </div>
         <div id="request-xf-wrapper" class="flex flex-col">
           <label class="block text-sm font-medium text-gray-700 mb-2" id="target-xf-date-label">Expected XF date <span class="text-gray-400 font-normal" id="target-xf-date-marker">Optional</span></label>
           <input type="date" id="request-xf-date" value="" onchange="updateXfFilterHint()" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
           <p id="xf-filter-hint" class="invisible mt-1.5 text-xs text-gray-500 leading-relaxed">
-            将会筛选出交期晚于 <span id="xf-filter-hint-date" class="font-semibold text-blue-700">所选日期</span> 的 PO，作为 Pull-in 分析对象
+            POs with Conf XF later than <span id="xf-filter-hint-date" class="font-semibold text-blue-700">the selected date</span> will be selected for pull-in analysis
           </p>
         </div>
         <!-- Mode 1.1: PO number -->
         <div id="po-fields" class="fcell fcell-po">
           <label class="block text-sm font-medium text-gray-700 mb-2">PO number <span class="text-gray-400 font-normal">Optional</span></label>
           <input type="text" id="po-list-input" value="PO#2026EM12345, PO#2026EM12346, PO#2026EM12347" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="PO#2025EM12345, PO#2025EM12346..." oninput="updateTargetMetrics()">
-          <p class="mt-1.5 text-xs text-gray-400">支持多个 PO，逗号分隔</p>
+          <p class="mt-1.5 text-xs text-gray-400">Multiple POs supported, comma-separated</p>
         </div>
         <!-- Mode 1.2: Style-Color (split) -->
         <div class="fcell fcell-style style-sub-split hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Style Number <span class="text-red-500 font-normal">*</span></label>
-          <input type="text" id="style-number-input" value="1166732" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+          <input type="text" id="style-number-input" value="1166732" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="One or more, comma-separated" oninput="updateTargetMetrics()">
         </div>
         <div class="fcell fcell-style style-sub-split hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Color Code <span class="text-red-500 font-normal">*</span></label>
-          <input type="text" id="color-code-input" value="CHE" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+          <input type="text" id="color-code-input" value="CHE" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="One or more, comma-separated" oninput="updateTargetMetrics()">
         </div>
         <!-- Mode 1.2: Style-Color (combo) -->
         <div class="fcell fcell-style style-sub-combo hidden md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color 组合 <span class="text-red-500 font-normal">*</span></label>
-          <textarea id="style-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code，多组逗号或换行分隔" oninput="updateTargetMetrics()"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color Combo <span class="text-red-500 font-normal">*</span></label>
+          <textarea id="style-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code, multiple pairs separated by commas or newlines" oninput="updateTargetMetrics()"></textarea>
         </div>
         <!-- Mode 1.3: Preferred Style-Color (split) -->
         <div class="fcell fcell-qty qty-sub-split hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Style Number <span class="text-gray-400 font-normal">Optional</span></label>
-          <input type="text" id="qty-style-number-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+          <input type="text" id="qty-style-number-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="One or more, comma-separated" oninput="updateTargetMetrics()">
         </div>
         <div class="fcell fcell-qty qty-sub-split hidden">
           <label class="block text-sm font-medium text-gray-700 mb-2">Color Code <span class="text-gray-400 font-normal">Optional</span></label>
-          <input type="text" id="qty-color-code-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="单个或多个，逗号分隔" oninput="updateTargetMetrics()">
+          <input type="text" id="qty-color-code-input" value="" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="One or more, comma-separated" oninput="updateTargetMetrics()">
         </div>
         <!-- Mode 1.3: Preferred Style-Color (combo) -->
         <div class="fcell fcell-qty qty-sub-combo hidden md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color 组合 <span class="text-gray-400 font-normal">Optional</span></label>
-          <textarea id="qty-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code，多组逗号或换行分隔" oninput="updateTargetMetrics()"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Style-Color Combo <span class="text-gray-400 font-normal">Optional</span></label>
+          <textarea id="qty-combo-input" rows="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Style Number / Color Code, multiple pairs separated by commas or newlines" oninput="updateTargetMetrics()"></textarea>
         </div>
         <!-- Mode 1.3: Expected Qty -->
         <div class="fcell fcell-qty hidden">
@@ -464,33 +459,36 @@
     <div id="supply-overview-section" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 animate-slide-in hidden">
       <div class="flex items-center gap-2 mb-4">
         <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">+</span>
-        <h2 class="font-bold text-[14px] text-gray-900">Supply Overview — 交期前后货量分布</h2>
+        <h2 class="font-bold text-[14px] text-gray-900">XF plan: PO Qty Before / After Expected XF</h2>
+        <span class="relative group">
+          <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="hidden group-hover:block absolute left-0 top-5 w-80 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20 font-normal">If the open qty before Expected XF already covers demand, no pull-in is needed; otherwise, select open POs after Expected XF from the list below for feasibility analysis.</span>
+        </span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div class="rounded-lg border border-cyan-200 bg-cyan-50 p-4 cursor-pointer hover:shadow-md hover:border-cyan-300 transition-all" onclick="openSupplyPOListModal('before')">
-          <div class="text-xs text-gray-500 mb-2">交期前待出货量（即将出货）</div>
+          <div class="text-xs text-gray-500 mb-2">PO Qty Before Expected XF</div>
           <div class="flex items-baseline gap-6">
             <div><span id="before-qty" class="text-2xl font-bold text-gray-900">0</span> <span class="text-sm font-normal text-gray-500">pairs</span></div>
             <div><span id="before-count" class="text-2xl font-bold text-gray-900">0</span> <span class="text-sm font-normal text-gray-500">POs</span></div>
           </div>
           <div class="flex items-center justify-between mt-2">
             <span class="text-xs text-gray-500">Conf XF ≤ Expected XF</span>
-            <span class="text-xs text-cyan-700 font-medium">查看 PO 明细 →</span>
+            <span class="text-xs text-cyan-700 font-medium">View PO details →</span>
           </div>
         </div>
         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all" onclick="openSupplyPOListModal('after')">
-          <div class="text-xs text-gray-500 mb-2">交期后可 Pull-in 量</div>
+          <div class="text-xs text-gray-500 mb-2">PO Qty After Expected XF (Pull-in Candidates)</div>
           <div class="flex items-baseline gap-6">
             <div><span id="after-qty" class="text-2xl font-bold text-amber-600">0</span> <span class="text-sm font-normal text-gray-500">pairs</span></div>
             <div><span id="after-count" class="text-2xl font-bold text-amber-600">0</span> <span class="text-sm font-normal text-gray-500">POs</span></div>
           </div>
           <div class="flex items-center justify-between mt-2">
             <span class="text-xs text-gray-500">Conf XF &gt; Expected XF</span>
-            <span class="text-xs text-amber-700 font-medium">查看 PO 明细 →</span>
+            <span class="text-xs text-amber-700 font-medium">View PO details →</span>
           </div>
         </div>
       </div>
-      <p class="text-xs text-gray-500">若交期前货量已满足需求，则无需 pull-in；如需补足，请在下方列表中选择交期后的 open PO 进行可行性分析。</p>
     </div>
 
     <!-- ===== Candidate PO Selection ===== -->
@@ -535,8 +533,7 @@
         </table>
       </div>
       <div id="candidate-pager"></div>
-      <div class="mt-4 flex items-center justify-between">
-        <span class="text-xs text-gray-500">Only selected POs will enter Total Demand / Gap analysis.</span>
+      <div class="mt-4 flex items-center justify-end">
         <button onclick="confirmCandidateSelection()" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 btn-action">Analyze Selected POs</button>
       </div>
     </div>
@@ -546,25 +543,22 @@
       <div class="col-span-2 md:col-span-4 flex items-center gap-2">
         <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
         <h2 class="font-bold text-gray-900">Current Status</h2>
-        <span class="text-sm text-gray-500 ml-2">Selected target POs, total demand and gap to fill</span>
       </div>
       <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
         <div class="text-xs text-gray-500 mb-1">Selected Target POs / Style-Colors</div>
         <div class="text-2xl font-bold text-gray-900"><span id="target-po-count">1</span> / <span id="target-style-count">1</span></div>
-        <div class="text-xs text-gray-400 mt-1">POs / Styles</div>
       </div>
       <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-        <div class="text-xs text-gray-500 mb-1">Total Demand</div>
+        <div class="text-xs text-gray-500 mb-1">Total PO qty</div>
         <div class="text-2xl font-bold text-gray-900" id="total-demand-display">7,992 <span class="text-sm font-normal text-gray-500">pairs</span></div>
         <div class="text-xs text-gray-400 mt-1">Selected order quantity</div>
       </div>
       <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-        <div class="text-xs text-gray-500 mb-1">Own PO FG — Direct Ship</div>
+        <div class="text-xs text-gray-500 mb-1">FG inventory</div>
         <div class="text-2xl font-bold text-green-600" id="own-po-fg-display">1,200 <span class="text-sm font-normal text-gray-500">pairs</span></div>
-        <div class="text-xs text-green-600 mt-1">No action needed</div>
       </div>
       <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-        <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+        <div class="text-xs text-gray-500 mb-1">Shortage</div>
         <div class="text-2xl font-bold text-red-600" id="gap-to-fill-display">6,792 <span class="text-sm font-normal text-gray-500">pairs</span></div>
         <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
           <div id="gap-bar" class="bg-red-500 h-2 rounded-full progress-bar" style="width: 100%"></div>
@@ -581,24 +575,27 @@
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
           <h2 class="font-bold text-gray-900">PO List</h2>
-          <span class="text-sm text-gray-500 ml-2">PO qty, FG inventory and shortage by PO / Style-Color-Size</span>
         </div>
         <button id="po-list-toggle-btn" onclick="togglePOList()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-1">
           <span>Expand</span>
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </button>
       </div>
+      <p id="fg14-notice-po" class="hidden mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"></p>
       <div id="po-list-table-wrapper" class="hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
           <thead class="bg-gray-50">
             <tr>
-              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO</th>
-              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Project Type</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO number</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Factory</th>
               <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Style</th>
               <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
               <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
               <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Conf XF date</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Production Status</th>
+              <th class="text-left px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
               <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">PO qty</th>
               <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">FG inventory</th>
               <th class="text-right px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Shortage</th>
@@ -609,7 +606,7 @@
           </tbody>
           <tfoot class="bg-gray-50 font-medium text-gray-900">
             <tr>
-              <td class="px-3 py-2 text-xs" colspan="6">Total</td>
+              <td class="px-3 py-2 text-xs" colspan="9">Total</td>
               <td class="px-3 py-2 text-xs text-right" id="po-status-total-demand"></td>
               <td class="px-3 py-2 text-xs text-right" id="po-status-total-fg"></td>
               <td class="px-3 py-2 text-xs text-right" id="po-status-total-gap"></td>
@@ -630,8 +627,8 @@
             <h2 class="font-bold text-gray-900">Decision Timing</h2>
           </div>
           <div class="flex items-center bg-gray-100 rounded-lg p-1">
-            <button id="mode-immediate" class="px-4 py-1.5 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchDecisionMode('immediate')">立即决策</button>
-            <button id="mode-deferred" class="px-4 py-1.5 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchDecisionMode('deferred')">延迟决策</button>
+            <button id="mode-immediate" class="px-4 py-1.5 text-sm rounded-md font-medium bg-white text-gray-900 shadow-sm transition-all" onclick="switchDecisionMode('immediate')">Decide Now</button>
+            <button id="mode-deferred" class="px-4 py-1.5 text-sm rounded-md font-medium text-gray-500 hover:text-gray-700 transition-all" onclick="switchDecisionMode('deferred')">Defer Decision</button>
           </div>
         </div>
 
@@ -651,17 +648,17 @@
           <!-- MPS projection cards -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div class="bg-gray-50 rounded-lg p-3 text-center">
-              <div class="text-xs text-gray-500 mb-1">原PO FG (当前)</div>
+              <div class="text-xs text-gray-500 mb-1">Own PO FG (Current)</div>
               <div class="text-xl font-bold text-gray-900" id="current-own-fg-display">1,200</div>
               <div class="text-xs text-gray-400">pairs</div>
             </div>
             <div class="bg-purple-50 rounded-lg p-3 text-center border border-purple-100">
-              <div class="text-xs text-purple-600 mb-1">原PO FG (预计)</div>
+              <div class="text-xs text-purple-600 mb-1">Own PO FG (Projected)</div>
               <div class="text-xl font-bold text-purple-900" id="projected-own-fg-display">1,200</div>
               <div class="text-xs text-purple-600" id="projected-opt1-delta">+0</div>
             </div>
             <div class="bg-purple-50 rounded-lg p-3 text-center border border-purple-100">
-              <div class="text-xs text-purple-600 mb-1">预计剩余 Gap</div>
+              <div class="text-xs text-purple-600 mb-1">Projected Remaining Gap</div>
               <div class="text-xl font-bold text-purple-900" id="projected-gap-display">6,792</div>
               <div class="text-xs text-purple-600" id="projected-gap-delta">−0</div>
             </div>
@@ -670,12 +667,22 @@
           <!-- Benefits & Risks -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
             <div class="bg-green-50 rounded-lg p-3 border border-green-100">
-              <div class="text-xs font-semibold text-green-700 mb-1">💰 等待收益</div>
-              <div class="text-sm text-green-800" id="deferred-benefit-text">选择延迟时间查看可减少的跨区调货量</div>
+              <div class="flex items-center gap-1 text-xs font-semibold text-green-700 mb-1">💰 Benefit of Waiting
+                <span class="relative group">
+                  <svg class="w-3.5 h-3.5 text-green-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span class="hidden group-hover:block absolute left-0 top-5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20 font-normal">Waiting lets your own POs finish more FG, shrinking the shortage and the C-order/Preload/re-route qty needed to fill it.</span>
+                </span>
+              </div>
+              <div class="text-sm text-green-800" id="deferred-benefit-text">Select a deferral period to see what you could save</div>
             </div>
             <div class="bg-amber-50 rounded-lg p-3 border border-amber-100">
-              <div class="text-xs font-semibold text-amber-700 mb-1">⚠️ 风险提示</div>
-              <div class="text-sm text-amber-800" id="deferred-risk-text">延迟决策将推迟发货节奏，需确认客户可接受新 ETA</div>
+              <div class="flex items-center gap-1 text-xs font-semibold text-amber-700 mb-1">⚠️ Risk
+                <span class="relative group">
+                  <svg class="w-3.5 h-3.5 text-amber-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span class="hidden group-hover:block absolute left-0 top-5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20 font-normal">Deferring delays the overall shipping schedule. Confirm the customer accepts the new ETA and monitor capacity changes on other POs during the period.</span>
+                </span>
+              </div>
+              <div class="text-sm text-amber-800" id="deferred-risk-text">Delays the shipping schedule; confirm the customer accepts the new ETA</div>
             </div>
           </div>
         </div>
@@ -686,7 +693,7 @@
     <div id="options-section" class="mb-6 animate-slide-in hidden">
       <div class="flex items-center gap-2 mb-5">
         <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
-        <h2 class="font-bold text-gray-900">Select Options to Fill the Gap</h2>
+        <h2 class="font-bold text-gray-900">Select Options to Fill the Shortage</h2>
         <span class="text-sm text-gray-500 ml-2">Check one or more options to preview allocation</span>
       </div>
 
@@ -698,24 +705,27 @@
             <div class="flex items-center gap-3">
               <input type="checkbox" id="opt1-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt1')">
               <div>
-                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded">OPTION 1</span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded">OPTION 1</span>
+                  <span id="opt1-order-badge" class="hidden rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white inline-flex items-center justify-center"></span>
+                </div>
                 <h3 class="font-bold text-gray-900 mt-0.5">C-order FG</h3>
               </div>
             </div>
             <div class="relative group">
               <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <div class="hidden group-hover:block absolute right-0 top-6 w-56 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
-                代表实物库存，尚未到达冲销时间点并正式冲销给 PO。
+                Physical FG inventory that has not yet reached its deduction point and been formally deducted to a PO.
               </div>
             </div>
           </div>
           <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Available</span>
+              <span class="text-sm text-gray-600">Physical FG inventory</span>
               <span class="text-base font-bold text-gray-900" id="opt1-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
             <div class="flex items-center justify-between text-xs mt-1">
-              <span class="text-gray-500">├ Reserved for open POs</span>
+              <span class="text-gray-500">├ Pre-deducted for open POs</span>
               <span class="font-medium text-gray-700" id="opt1-reserved-display">0</span>
             </div>
             <div class="flex items-center justify-between text-xs mt-0.5">
@@ -730,8 +740,8 @@
           <div id="opt1-reserved-entry" class="mt-3 hidden">
             <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
               <div class="text-xs text-gray-600">
-                <span id="opt1-reserved-po-count" class="font-medium text-gray-900">0</span> reserved PO(s),
-                total <span id="opt1-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs to be deducted
+                <span id="opt1-reserved-po-count" class="font-medium text-gray-900">0</span> pre-deducted PO(s),
+                total <span id="opt1-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs pre-deducted
               </div>
               <button type="button" onclick="openReservedPOModal('opt1', { showTabs: false })" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
                 View full PO list
@@ -747,24 +757,27 @@
             <div class="flex items-center gap-3">
               <input type="checkbox" id="opt2-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt2')">
               <div>
-                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">OPTION 2</span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded">OPTION 2</span>
+                  <span id="opt2-order-badge" class="hidden rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white inline-flex items-center justify-center"></span>
+                </div>
                 <h3 class="font-bold text-gray-900 mt-0.5">Preload FG</h3>
               </div>
             </div>
             <div class="relative group">
               <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-green-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <div class="hidden group-hover:block absolute right-0 top-6 w-56 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
-                代表实物库存，尚未到达冲销时间点并正式冲销给 PO。
+                Physical FG inventory that has not yet reached its deduction point and been formally deducted to a PO.
               </div>
             </div>
           </div>
           <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Available</span>
+              <span class="text-sm text-gray-600">Physical FG inventory</span>
               <span class="text-base font-bold text-gray-900" id="opt2-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
             <div class="flex items-center justify-between text-xs mt-1">
-              <span class="text-gray-500">├ Reserved for open POs</span>
+              <span class="text-gray-500">├ Pre-deducted for open POs</span>
               <span class="font-medium text-gray-700" id="opt2-reserved-display">0</span>
             </div>
             <div class="flex items-center justify-between text-xs mt-0.5">
@@ -779,8 +792,8 @@
           <div id="opt2-reserved-entry" class="mt-3 hidden">
             <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
               <div class="text-xs text-gray-600">
-                <span id="opt2-reserved-po-count" class="font-medium text-gray-900">0</span> reserved PO(s),
-                total <span id="opt2-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs to be deducted
+                <span id="opt2-reserved-po-count" class="font-medium text-gray-900">0</span> pre-deducted PO(s),
+                total <span id="opt2-reserved-po-qty" class="font-medium text-gray-900">0</span> pairs pre-deducted
               </div>
               <button type="button" onclick="openReservedPOModal('opt2', { showTabs: false })" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
                 View full PO list
@@ -796,20 +809,23 @@
             <div class="flex items-center gap-3">
               <input type="checkbox" id="opt3-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt3')">
               <div>
-                <span class="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs font-bold rounded">OPTION 3</span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 bg-teal-100 text-teal-700 text-xs font-bold rounded">OPTION 3</span>
+                  <span id="opt3-order-badge" class="hidden rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white inline-flex items-center justify-center"></span>
+                </div>
                 <h3 class="font-bold text-gray-900 mt-0.5">Same Region PO FG Re-route</h3>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <div class="inline-flex items-center bg-gray-100 rounded-lg p-0.5">
-                <button id="opt3-strategy-btn1" type="button" onclick="setOptionStrategy('opt3','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略1</button>
-                <button id="opt3-strategy-btn2" type="button" onclick="setOptionStrategy('opt3','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略2</button>
+                <button id="opt3-strategy-btn1" type="button" onclick="setOptionStrategy('opt3','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">Strategy 1</button>
+                <button id="opt3-strategy-btn2" type="button" onclick="setOptionStrategy('opt3','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">Strategy 2</button>
               </div>
               <div class="relative group">
                 <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
-                  <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
-                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响；由于实际交期取决于工厂产能、生产计划、库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估。</p>
+                  <p class="mb-1"><strong>Strategy 1:</strong> Only takes inventory with Conf XF date later than the target PO; it can be "borrowed" first and theoretically does not affect the original PO's Conf XF date.</p>
+                  <p><strong>Strategy 2:</strong> Takes inventory with Conf XF date more than 2 weeks after the Target XF Date; those POs' Conf XF dates will be affected. Since actual dates depend on factory capacity, production plan, inventory and other factors, the system cannot reliably estimate them — new dates will be evaluated by the factory.</p>
                 </div>
               </div>
             </div>
@@ -824,17 +840,26 @@
               <span class="font-bold text-teal-700" id="opt3-allocated-display">0</span>
             </div>
           </div>
-          <div id="opt3-strategy-note" class="text-xs text-teal-700 mt-2"></div>
+          <div class="flex items-start gap-1.5 mt-2">
+            <span id="opt3-strategy-note" class="text-xs text-teal-700"></span>
+            <span class="relative group shrink-0">
+              <svg class="w-3.5 h-3.5 text-gray-400 cursor-help hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="hidden group-hover:block absolute left-0 top-5 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20" id="opt3-strategy-note-tip"></span>
+            </span>
+          </div>
           <div id="opt3-source-list" class="mt-3 hidden">
             <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
               <div class="text-xs text-gray-600">
                 <span id="opt3-source-count" class="font-medium text-gray-900">0</span> source PO(s),
                 total <span id="opt3-source-qty" class="font-medium text-gray-900">0</span> pairs available
               </div>
-              <button type="button" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                View full PO list
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </button>
+              <span id="opt3-viewpo-wrap" class="flex items-center">
+                <button type="button" id="opt3-viewpo-btn" onclick="openSourcePOModal('opt3')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                  View full PO list
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <span id="opt3-viewpo-pending" class="hidden text-xs text-gray-400 italic">Run Calculate to view</span>
+              </span>
             </div>
           </div>
         </div>
@@ -845,20 +870,23 @@
             <div class="flex items-center gap-3">
               <input type="checkbox" id="opt4-check" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" onchange="toggleOption('opt4')">
               <div>
-                <span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded">OPTION 4</span>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded">OPTION 4</span>
+                  <span id="opt4-order-badge" class="hidden rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white inline-flex items-center justify-center"></span>
+                </div>
                 <h3 class="font-bold text-gray-900 mt-0.5">Cross-Region PO FG Re-route</h3>
               </div>
             </div>
             <div class="flex items-center gap-2">
               <div class="inline-flex items-center bg-gray-100 rounded-lg p-0.5">
-                <button id="opt4-strategy-btn1" type="button" onclick="setOptionStrategy('opt4','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略1</button>
-                <button id="opt4-strategy-btn2" type="button" onclick="setOptionStrategy('opt4','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">策略2</button>
+                <button id="opt4-strategy-btn1" type="button" onclick="setOptionStrategy('opt4','strategy1')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">Strategy 1</button>
+                <button id="opt4-strategy-btn2" type="button" onclick="setOptionStrategy('opt4','strategy2')" class="px-2 py-1 text-xs rounded-md font-medium transition-all">Strategy 2</button>
               </div>
               <div class="relative group">
                 <svg class="w-4 h-4 text-gray-400 cursor-help hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div class="hidden group-hover:block absolute right-0 top-6 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">
-                  <p class="mb-1"><strong>策略1：</strong>只取交期比目标 PO 更晚的库存，可先“借用”，理论上对原 PO 交期无影响。</p>
-                  <p><strong>策略2：</strong>取 Target XF Date +2 周之后的库存，这些 PO 交期会受影响；由于实际交期取决于工厂产能、生产计划、库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估。</p>
+                  <p class="mb-1"><strong>Strategy 1:</strong> Only takes inventory with Conf XF date later than the target PO; it can be "borrowed" first and theoretically does not affect the original PO's Conf XF date.</p>
+                  <p><strong>Strategy 2:</strong> Takes inventory with Conf XF date more than 2 weeks after the Target XF Date; those POs' Conf XF dates will be affected. Since actual dates depend on factory capacity, production plan, inventory and other factors, the system cannot reliably estimate them — new dates will be evaluated by the factory.</p>
                 </div>
               </div>
             </div>
@@ -873,17 +901,26 @@
               <span class="font-bold text-orange-700" id="opt4-allocated-display">0</span>
             </div>
           </div>
-          <div id="opt4-strategy-note" class="text-xs text-orange-700 mt-2"></div>
+          <div class="flex items-start gap-1.5 mt-2">
+            <span id="opt4-strategy-note" class="text-xs text-orange-700"></span>
+            <span class="relative group shrink-0">
+              <svg class="w-3.5 h-3.5 text-gray-400 cursor-help hover:text-orange-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span class="hidden group-hover:block absolute left-0 top-5 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20" id="opt4-strategy-note-tip"></span>
+            </span>
+          </div>
           <div id="opt4-source-list" class="mt-3 hidden">
             <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
               <div class="text-xs text-gray-600">
                 <span id="opt4-source-count" class="font-medium text-gray-900">0</span> source PO(s),
                 total <span id="opt4-source-qty" class="font-medium text-gray-900">0</span> pairs available
               </div>
-              <button type="button" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                View full PO list
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </button>
+              <span id="opt4-viewpo-wrap" class="flex items-center">
+                <button type="button" id="opt4-viewpo-btn" onclick="openSourcePOModal('opt4')" class="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                  View full PO list
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <span id="opt4-viewpo-pending" class="hidden text-xs text-gray-400 italic">Run Calculate to view</span>
+              </span>
             </div>
           </div>
         </div>
@@ -893,8 +930,19 @@
       <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
         <span class="flex items-center gap-1">
           <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          勾选后自动按缺口分配
+          Allocation runs in your check order
+          <span class="relative group">
+            <svg class="w-3.5 h-3.5 text-gray-400 cursor-help hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="hidden group-hover:block absolute left-0 top-5 w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-2 text-xs text-gray-600 z-20">Allocation runs in your check order (Step 1 → 2 → 3 …); each step only covers the shortage left by earlier steps, so the order affects matching results.</span>
+          </span>
         </span>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button id="calculate-allocation-btn" onclick="calculateAllocation()" disabled class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 btn-action flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Calculate Allocation
+        </button>
       </div>
     </div>
 
@@ -903,7 +951,7 @@
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
           <h2 class="font-bold text-gray-900">Allocation Matrix</h2>
-          <span class="text-sm text-gray-500 ml-2">Read-only feasibility preview by PO / Style-Color-Size and source</span>
+          <span class="text-sm text-gray-500 ml-2">Read-only preview — how much of each source can cover the shortage; Style-Color-Size matched automatically.</span>
         </div>
         <div class="flex items-center gap-2">
           <button id="allocation-matrix-toggle-btn" onclick="toggleAllocationMatrix()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-1">
@@ -912,6 +960,7 @@
           </button>
         </div>
       </div>
+      <div id="allocation-stale-note" class="hidden mb-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">Options changed — click Calculate Allocation to refresh results.</div>
       <div id="allocation-matrix-table-wrapper" class="hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -935,9 +984,6 @@
           </tbody>
         </table>
       </div>
-      <div class="mt-3 text-xs text-gray-500">
-        💡 Numbers show how much of each source can cover the shortage based on current availability. Style-Color-Size is matched automatically.
-      </div>
     </div>
   </div>
 
@@ -951,7 +997,7 @@
       <!-- Support vs Gap -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-gray-50 rounded-lg p-4 text-center">
-          <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+          <div class="text-xs text-gray-500 mb-1">Shortage</div>
           <div class="text-2xl font-bold text-red-600" id="summary-gap">6,792</div>
           <div class="text-xs text-gray-400">pairs</div>
         </div>
@@ -968,7 +1014,7 @@
         <div class="bg-gray-50 rounded-lg p-4 text-center">
           <div class="text-xs text-gray-500 mb-1">Expected Fulfillment Rate</div>
           <div class="text-2xl font-bold text-purple-600" id="fulfillment-rate">0%</div>
-          <div class="text-xs text-gray-400">Total Support / Gap to Fill</div>
+          <div class="text-xs text-gray-400">Total Support / Shortage</div>
         </div>
         <div class="bg-gray-50 rounded-lg p-4 text-center hidden">
           <div class="text-xs text-gray-500 mb-1">Est. Repack Cost</div>
@@ -989,12 +1035,11 @@
                 <th class="text-right px-3 py-2 text-xs font-medium text-gray-500">Qty</th>
                 <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Factory Operation Lead Time</th>
                 <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Expected PO XF</th>
-                <th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Key Impact</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100" id="breakdown-body">
               <tr id="breakdown-empty">
-                <td colspan="6" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
+                <td colspan="5" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
               </tr>
             </tbody>
           </table>
@@ -1063,7 +1108,7 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-gray-50 rounded-lg p-4 text-center">
-              <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+              <div class="text-xs text-gray-500 mb-1">Shortage</div>
               <div class="text-2xl font-bold text-red-600" id="execution-gap">0</div>
               <div class="text-xs text-gray-400">pairs</div>
             </div>
@@ -1162,7 +1207,7 @@
           </div>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-gray-50 rounded-lg p-4 text-center">
-              <div class="text-xs text-gray-500 mb-1">Gap to Fill</div>
+              <div class="text-xs text-gray-500 mb-1">Shortage</div>
               <div class="text-xl font-bold text-red-600" id="result-gap">0</div>
               <div class="text-xs text-gray-400">pairs</div>
             </div>
@@ -1256,7 +1301,7 @@
           <h3 class="font-bold text-gray-900 mb-4">Close Loop with Demand Region</h3>
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Feedback to Region</label>
-            <textarea id="result-feedback-to-region" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 实际可执行 6,000 pairs，剩余 800 pairs 缺口转入下一周期处理..."></textarea>
+            <textarea id="result-feedback-to-region" rows="2" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="e.g. 6,000 pairs executable; the remaining 800-pair gap rolls into the next cycle..."></textarea>
           </div>
           <div class="flex justify-end" id="result-close-section">
             <button onclick="closeScheme()" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg btn-action flex items-center gap-2">
@@ -1292,6 +1337,9 @@
     let targetItems = [];          // demand items at PO/Style/Color/Size level
     let inventorySources = [];     // available inventory sources at same level
     let allocations = [];          // current allocation plan
+    let optionOrder = [];          // opt keys ('opt1'..'opt4') in the order the user checked them
+    let allocationStale = true;    // true when selection changed since the last Calculate Allocation run
+    let allocationCalculated = false; // true once Calculate Allocation has run at least once
 
     // Default demo data (real warehouse sample)
     const DEFAULT_DEMO_DATA = [
@@ -1438,6 +1486,7 @@
     "order_status": "Initial",
     "po_qty": 59,
     "fg_inventory": 0,
+    "fg14_qty": 30,
     "shortage": 59,
     "c_order": 974,
     "preload": 1179,
@@ -1468,6 +1517,7 @@
     "order_status": "Initial",
     "po_qty": 132,
     "fg_inventory": 0,
+    "fg14_qty": 12,
     "shortage": 132,
     "c_order": 837,
     "preload": 3257,
@@ -2654,7 +2704,7 @@
       const p = Math.min(Math.max(1, page), pages);
       const btnCls = 'px-2.5 py-1 text-xs rounded border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed';
       el.innerHTML = '<div class="flex items-center justify-between gap-3 py-3 text-xs text-gray-500">'
-        + '<span>共 ' + total.toLocaleString() + ' 条</span>'
+        + '<span>' + total.toLocaleString() + ' total</span>'
         + '<div class="flex items-center gap-2">'
         + '<button type="button" data-pager="prev" ' + (p <= 1 ? 'disabled' : '') + ' class="' + btnCls + '">\u2039 Prev</button>'
         + '<span>Page ' + p + ' / ' + pages + '</span>'
@@ -2719,9 +2769,14 @@
       // Buttons
       const modes = ['po', 'style', 'qty'];
       const desc = {
-        po: 'Confirmed order range; pull orders by PO#',
-        style: 'Confirmed priority style; find pull-in orders by Style-Color',
-        qty: 'Only specify shipment quantity; system recommends styles/orders that can ship early'
+        po: 'Confirmed order range; pull in specific POs by PO#',
+        style: 'Confirmed priority style; pull in by style-color',
+        qty: 'Pull in a specific quantity; system recommends styles/orders that can ship early'
+      };
+      const shortDesc = {
+        po: 'Pull in by specific PO numbers',
+        style: 'Pull in by style-color',
+        qty: 'Pull in by specific quantity; system recommends orders'
       };
 
       modes.forEach(m => {
@@ -2733,7 +2788,9 @@
         }
       });
 
-      document.getElementById('entry-mode-desc').textContent = desc[mode];
+      document.getElementById('entry-mode-desc').textContent = shortDesc[mode];
+      const descTip = document.getElementById('entry-mode-desc-tip');
+      if (descTip) descTip.textContent = desc[mode];
 
       // Fields
       document.getElementById('style-fields').classList.toggle('hidden', mode !== 'style');
@@ -2746,8 +2803,7 @@
 
       // XF date range only for PO List mode (1.1); request XF date is always visible
       const isPO = mode === 'po';
-      document.getElementById('xf-from-wrapper').classList.toggle('hidden', !isPO);
-      document.getElementById('xf-to-wrapper').classList.toggle('hidden', !isPO);
+      document.getElementById('xf-range-wrapper').classList.toggle('hidden', !isPO);
       document.getElementById('common-fields-grid').className = 'grid grid-cols-1 md:grid-cols-4 gap-4 mb-4';
 
       // Target region required only for PO List mode
@@ -2789,6 +2845,35 @@
       }
 
       updateTargetMetrics();
+    }
+
+    // Conf XF Date range validation: keep from <= to (auto-swap when inverted)
+    function validateXfRange() {
+      const fromEl = document.getElementById('xf-from');
+      const toEl = document.getElementById('xf-to');
+      if (!fromEl || !toEl) return;
+      if (fromEl.value && toEl.value && fromEl.value > toEl.value) {
+        const tmp = fromEl.value;
+        fromEl.value = toEl.value;
+        toEl.value = tmp;
+      }
+    }
+
+    // Amber notice for POs excluded because FG14 completion qty > 0 (partial shipping started)
+    function updateFg14Notice(elId, excludedPOs) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const list = Array.isArray(excludedPOs) ? excludedPOs : [];
+      if (list.length > 0) {
+        const shown = list.slice(0, 2);
+        const more = list.length - shown.length;
+        const poText = shown.join(', ') + (more > 0 ? ' +' + more + ' more' : '');
+        el.innerHTML = list.length + ' of the selected POs have started shipping and cannot participate in pull-in analysis. '
+          + '<span class="font-medium underline decoration-dotted cursor-help" title="' + list.join(', ') + '">' + poText + '</span>';
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
     }
 
     function updateTargetMetrics() {
@@ -2953,12 +3038,12 @@
 
       if (delta > 0) {
         document.getElementById('deferred-benefit-text').textContent =
-          `等待 ${deferredDays} 天，原PO FG 增加 ${delta.toLocaleString()} 双。Gap to Fill 从 ${currentGap.toLocaleString()} 降至 ${projectedGap.toLocaleString()} 双，可减少从 C-order/Preload/区域调货 ${saved.toLocaleString()} 双。`;
+          `+${delta.toLocaleString()} pairs own FG → gap ${projectedGap.toLocaleString()}; saves ${saved.toLocaleString()} pairs of re-route.`;
       } else {
-        document.getElementById('deferred-benefit-text').textContent = '选择延迟时间查看可减少的调货量';
+        document.getElementById('deferred-benefit-text').textContent = 'Select a deferral period to see what you could save';
       }
       document.getElementById('deferred-risk-text').textContent =
-        `延迟 ${deferredDays} 天将推迟整体发货节奏。需确认客户可接受新 ETA，并监控期间其他 PO 的产能变化。`;
+        `Delays shipping ${deferredDays} days; confirm the customer accepts the new ETA.`;
     }
 
     function updateGapDisplay() {
@@ -3078,15 +3163,24 @@
         const sumDemand = items.reduce((s, r) => s + r.demand, 0);
         const sumFg = items.reduce((s, r) => s + r.fg, 0);
         const sumShortage = items.reduce((s, r) => s + r.shortage, 0);
+        const brandCell = first.brand || '-';
+        const factoryCell = first.factory_name || '-';
+        const styleCell = ((first.style_number || '') + ' ' + (first.style_name || '')).trim() || first.style || '-';
+        const colorCell = first.color_code || first.color || '-';
+        const statusCell = first.po_production_status || '-';
+        const regionCell = first.target_region || first.region || '-';
         if (items.length === 1) {
           html += `
           <tr class="hover:bg-gray-50">
             <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>${first.po}</td>
-            <td class="px-3 py-2 text-gray-600">${first.projectType || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${first.style}</td>
-            <td class="px-3 py-2 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2 text-gray-600">${brandCell}</td>
+            <td class="px-3 py-2 text-gray-600">${factoryCell}</td>
+            <td class="px-3 py-2 text-gray-600">${styleCell}</td>
+            <td class="px-3 py-2 text-gray-600">${colorCell}</td>
             <td class="px-3 py-2 text-gray-600">${first.size}</td>
             <td class="px-3 py-2 text-gray-600">${first.xfDate}</td>
+            <td class="px-3 py-2 text-gray-600">${statusCell}</td>
+            <td class="px-3 py-2 text-gray-600">${regionCell}</td>
             <td class="px-3 py-2 text-right font-medium text-gray-900">${sumDemand.toLocaleString()}</td>
             <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-medium text-red-600">${sumShortage > 0 ? sumShortage.toLocaleString() : 0}</td>
@@ -3097,11 +3191,14 @@
         html += `
           <tr class="po-group-row hover:bg-gray-50" onclick="toggleGroupRows(this, '${cls}')">
             <td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">${poGroupChevronSvg()}${first.po}</span></td>
-            <td class="px-3 py-2 text-gray-600">${first.projectType || '-'}</td>
-            <td class="px-3 py-2 text-gray-600">${first.style}</td>
-            <td class="px-3 py-2 text-gray-600">${first.color}</td>
+            <td class="px-3 py-2 text-gray-600">${brandCell}</td>
+            <td class="px-3 py-2 text-gray-600">${factoryCell}</td>
+            <td class="px-3 py-2 text-gray-600">${styleCell}</td>
+            <td class="px-3 py-2 text-gray-600">${colorCell}</td>
             <td class="px-3 py-2 text-gray-400 text-xs">${items.length} sizes</td>
             <td class="px-3 py-2 text-gray-600">${first.xfDate}</td>
+            <td class="px-3 py-2 text-gray-600">${statusCell}</td>
+            <td class="px-3 py-2 text-gray-600">${regionCell}</td>
             <td class="px-3 py-2 text-right font-medium text-gray-900">${sumDemand.toLocaleString()}</td>
             <td class="px-3 py-2 text-right text-green-600">${sumFg.toLocaleString()}</td>
             <td class="px-3 py-2 text-right font-medium text-red-600">${sumShortage > 0 ? sumShortage.toLocaleString() : 0}</td>
@@ -3113,8 +3210,11 @@
             <td class="px-3 py-1.5"></td>
             <td class="px-3 py-1.5"></td>
             <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
             <td class="px-3 py-1.5 text-gray-600">${r.size}</td>
             <td class="px-3 py-1.5 text-gray-400">${r.xfDate}</td>
+            <td class="px-3 py-1.5"></td>
+            <td class="px-3 py-1.5"></td>
             <td class="px-3 py-1.5 text-right text-gray-700">${r.demand.toLocaleString()}</td>
             <td class="px-3 py-1.5 text-right text-green-600">${r.fg.toLocaleString()}</td>
             <td class="px-3 py-1.5 text-right text-red-500">${r.shortage > 0 ? r.shortage.toLocaleString() : 0}</td>
@@ -3124,7 +3224,7 @@
       tbody.innerHTML = html;
       if (poTableTruncatedNote) {
         const noteRow = document.createElement('tr');
-        noteRow.innerHTML = `<td colspan="9" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${poTableTruncatedNote}</td>`;
+        noteRow.innerHTML = `<td colspan="12" class="px-3 py-2 text-xs text-amber-600 bg-amber-50">${poTableTruncatedNote}</td>`;
         tbody.appendChild(noteRow);
       }
       renderPager(document.getElementById('po-status-pager'), groups.length, poStatusPage, TABLE_PAGE_SIZE, p => { poStatusPage = p; renderPOTable(poTableTruncatedNote); });
@@ -3182,12 +3282,23 @@
 
     // Reserved-PO groups for a pool type (c-order / preload): earlier-XF POs (the
     // original deduction order) + the target PO itself (isTarget), with size-level
-    // rows. Sum of all size.qty == total reservedQty of the type.
+    // rows. Each size row records its size-level poQty; pre-deducted qty = PO qty
+    // − FG10, i.e. qty = max(0, poQty − fg). Group poQty is the size-level total.
     function buildReservedGroups(type) {
       const sources = inventorySources.filter(s => s.sourceType === type && (s.reservedQty || 0) > 0);
       const map = new Map();
       sources.forEach(s => {
         const item = targetItems.find(t => t.id === s.targetId) || { po: 'PO#?', xfDate: '2026-08-01', region: 'EMEA', size: '-', demand: 0, fg: 0 };
+        // Earlier synthesized POs inherit the display attributes of the linked target item
+        const inherit = {
+          brand: item.brand || '',
+          factory_name: item.factory_name || '',
+          style_number: item.style_number || '',
+          style_name: item.style_name || '',
+          color_code: item.color_code || item.color || '',
+          target_region: item.target_region || item.region || '',
+          po_production_status: item.po_production_status || ''
+        };
         const rand = seededRand(s.id + item.po);
         const n = 2 + Math.floor(rand() * 2); // 2-3 earlier POs
         let remaining = s.reservedQty;
@@ -3196,15 +3307,52 @@
           remaining -= qty;
           const po = 'PO#' + (item.region || 'EMEA') + String(10000 + Math.floor(rand() * 89999));
           const xfDate = addDays(item.xfDate, -(14 + Math.floor(rand() * 42)));
-          const sizes = [{ size: item.size, fg: qty + Math.round(rand() * qty * 0.6), qty }];
-          map.set(po, { po, xfDate, isTarget: false, poQty: Math.round(qty * (1.3 + rand() * 0.7)), sizes });
+          // FG per earlier PO covers its own pre-deduction (fg >= qty) but the pool
+          // total is calibrated so that in the before view some target POs are covered
+          // and some are not (deterministic via seededRand). poQty = fg + qty keeps
+          // the pre-deducted qty (poQty − fg) equal to the calibrated qty.
+          const fg = Math.round(qty * (1.15 + rand() * 0.4));
+          const sizes = [{ size: item.size, fg, poQty: fg + qty, qty }];
+          map.set(po, { po, xfDate, isTarget: false, sizes, ...inherit });
         }
         // Target PO (merge size rows when a target PO spans multiple sources)
         let g = map.get(item.po);
-        if (!g) { g = { po: item.po, xfDate: item.xfDate, isTarget: true, poQty: item.demand, sizes: [] }; map.set(item.po, g); }
-        g.sizes.push({ size: item.size, fg: item.fg || 0, qty: Math.max(1, remaining) });
+        if (!g) { g = { po: item.po, xfDate: item.xfDate, isTarget: true, sizes: [], ...inherit }; map.set(item.po, g); }
+        const tPoQty = item.demand || 0;
+        const tFg = item.fg || 0;
+        g.sizes.push({ size: item.size, fg: tFg, poQty: tPoQty, qty: Math.max(0, tPoQty - tFg) });
       });
-      return [...map.values()].sort((a, b) => (a.xfDate < b.xfDate ? -1 : 1));
+      const groups = [...map.values()].sort((a, b) => (a.xfDate < b.xfDate ? -1 : 1));
+      // Group-level poQty = sum of size-level poQty
+      groups.forEach(g => { g.poQty = g.sizes.reduce((x, s) => x + (s.poQty || 0), 0); });
+
+      // Coverage: does the pool's total available FG (sum of all size-level fg)
+      // cover each PO's pre-deducted qty under a given deduction order? Walk the
+      // order accumulating pre-deducted qty; once the cumulative total exceeds
+      // availability, that PO and all later ones are not covered.
+      const totalAvailable = groups.reduce((x, g) => x + g.sizes.reduce((y, s) => y + s.fg, 0), 0);
+      const computeCoverage = (ordered) => {
+        const covered = new Map();
+        let cum = 0;
+        let ok = true;
+        ordered.forEach(g => {
+          cum += g.sizes.reduce((y, s) => y + s.qty, 0);
+          if (ok && cum <= totalAvailable) covered.set(g.po, true);
+          else { ok = false; covered.set(g.po, false); }
+        });
+        return covered;
+      };
+      // Before: ascending Conf XF (original plan). After: Target PO first, then
+      // ascending Conf XF. A PO covered before but not after was "squeezed out".
+      const beforeCov = computeCoverage(groups);
+      const afterOrder = groups.slice().sort((a, b) => ((b.isTarget ? 1 : 0) - (a.isTarget ? 1 : 0)) || (a.xfDate < b.xfDate ? -1 : 1));
+      const afterCov = computeCoverage(afterOrder);
+      groups.forEach(g => {
+        g.coveredBefore = beforeCov.get(g.po) !== false;
+        g.coveredAfter = afterCov.get(g.po) !== false;
+        g.squeezed = g.coveredBefore && !g.coveredAfter;
+      });
+      return groups;
     }
 
     function reservedGroupTotals(g) {
@@ -3232,20 +3380,42 @@
     // renders one table; rows are expandable to size level.
     let reservedModalState = null; // { opt, type, order: 'before'|'after', groups }
 
-    function buildReservedRowsHtml(groups) {
+    // view: 'before' = original Conf XF order, 'after' = Target-first pull-in order
+    function buildReservedRowsHtml(groups, view) {
+      const isAfter = view === 'after';
       let html = '';
       groups.forEach((g, gi) => {
         const t = reservedGroupTotals(g);
-        const tag = g.isTarget ? ' <span class="px-1.5 py-0.5 rounded text-white bg-blue-600" style="font-size:10px">Target · 优先抵扣</span>' : '';
+        const covered = isAfter ? g.coveredAfter !== false : g.coveredBefore !== false;
+        const dimCls = covered ? '' : ' opacity-50';
+        const covTag = !covered && !(isAfter && g.squeezed)
+          ? ' <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700" style="font-size:10px">Not covered by reserved stock</span>' : '';
+        const sqzTag = isAfter && g.squeezed
+          ? ' <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700" style="font-size:10px">Squeezed out</span>' : '';
+        const hitTag = covered && g.isTarget
+          ? ' <span class="px-1.5 py-0.5 rounded bg-green-100 text-green-700" style="font-size:10px">In Reserved list</span>' : '';
+        const tag = (g.isTarget ? ' <span class="px-1.5 py-0.5 rounded text-white bg-blue-600" style="font-size:10px">Target</span>' : '') + hitTag + covTag + sqzTag;
         const seqBadge = '<span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold '
           + (g.isTarget ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500') + '">' + (gi + 1) + '</span>';
+        const brandCell = g.brand || '-';
+        const factoryCell = g.factory_name || '-';
+        const styleCell = ((g.style_number || '') + ' ' + (g.style_name || '')).trim() || '-';
+        const colorCell = g.color_code || '-';
+        const statusCell = g.po_production_status || '-';
+        const regionCell = g.target_region || '-';
         if (g.sizes.length === 1) {
           const s = g.sizes[0];
-          html += '<tr class="hover:bg-gray-50' + (g.isTarget ? ' bg-blue-50/60' : '') + '">'
+          html += '<tr class="hover:bg-gray-50' + dimCls + (g.isTarget ? ' bg-blue-50/60' : '') + '">'
             + '<td class="px-3 py-2">' + seqBadge + '</td>'
             + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>' + g.po + tag + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + brandCell + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + factoryCell + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + styleCell + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + colorCell + '</td>'
             + '<td class="px-3 py-2 text-gray-600">' + s.size + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + statusCell + '</td>'
+            + '<td class="px-3 py-2 text-gray-600">' + regionCell + '</td>'
             + '<td class="px-3 py-2 text-gray-600">' + g.poQty.toLocaleString() + '</td>'
             + '<td class="px-3 py-2 text-gray-600">' + s.fg.toLocaleString() + '</td>'
             + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + s.qty.toLocaleString() + '</td>'
@@ -3254,11 +3424,17 @@
         }
         const cls = 'rsz-' + gi;
         const isOpen = expandedReservedGroups.has(g.po);
-        html += '<tr class="po-group-row hover:bg-gray-50 cursor-pointer' + (g.isTarget ? ' bg-blue-50/60' : '') + '" onclick="toggleGroupRowsTracked(this, \'' + cls + '\', expandedReservedGroups, \'' + jsStr(g.po) + '\')">'
+        html += '<tr class="po-group-row hover:bg-gray-50 cursor-pointer' + dimCls + (g.isTarget ? ' bg-blue-50/60' : '') + '" onclick="toggleGroupRowsTracked(this, \'' + cls + '\', expandedReservedGroups, \'' + jsStr(g.po) + '\')">'
           + '<td class="px-3 py-2">' + seqBadge + '</td>'
           + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-flex items-center gap-1.5">' + poGroupChevronSvg(isOpen ? 'open' : '') + g.po + tag + '</span></td>'
-          + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + brandCell + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + factoryCell + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + styleCell + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + colorCell + '</td>'
           + '<td class="px-3 py-2 text-gray-400 text-xs">' + g.sizes.length + ' sizes</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + statusCell + '</td>'
+          + '<td class="px-3 py-2 text-gray-600">' + regionCell + '</td>'
           + '<td class="px-3 py-2 text-gray-600">' + g.poQty.toLocaleString() + '</td>'
           + '<td class="px-3 py-2 text-gray-600">' + t.fg.toLocaleString() + '</td>'
           + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + t.qty.toLocaleString() + '</td>'
@@ -3268,7 +3444,13 @@
             + '<td class="px-3 py-1.5"></td>'
             + '<td class="px-3 py-1.5 pl-9 text-gray-400">↳</td>'
             + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5"></td>'
             + '<td class="px-3 py-1.5 text-gray-600">' + s.size + '</td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5"></td>'
+            + '<td class="px-3 py-1.5"></td>'
             + '<td class="px-3 py-1.5"></td>'
             + '<td class="px-3 py-1.5 text-gray-400">' + s.fg.toLocaleString() + '</td>'
             + '<td class="px-3 py-1.5 text-right text-gray-700">' + s.qty.toLocaleString() + '</td>'
@@ -3285,13 +3467,17 @@
       const summaryEl = document.getElementById('source-po-modal-summary');
       const tabBefore = document.getElementById('reserved-tab-before');
       const tabAfter = document.getElementById('reserved-tab-after');
+      const noteEl = document.getElementById('source-po-modal-note');
 
-      const ordered = st.order === 'after'
-        ? [...st.groups.filter(g => g.isTarget), ...st.groups.filter(g => !g.isTarget)]
+      // Before tab / plain list: ascending Conf XF (original deduction order).
+      // After tab: the Target PO deducts first, then ascending Conf XF.
+      const isAfter = st.showTabs !== false && st.order === 'after';
+      const ordered = isAfter
+        ? st.groups.slice().sort((a, b) => ((b.isTarget ? 1 : 0) - (a.isTarget ? 1 : 0)) || (a.xfDate < b.xfDate ? -1 : 1))
         : st.groups;
 
       const rStart = (sourceModalPage - 1) * TABLE_PAGE_SIZE;
-      body.innerHTML = buildReservedRowsHtml(ordered.slice(rStart, rStart + TABLE_PAGE_SIZE));
+      body.innerHTML = buildReservedRowsHtml(ordered.slice(rStart, rStart + TABLE_PAGE_SIZE), isAfter ? 'after' : 'before');
       renderPager(document.getElementById('source-po-modal-pager'), ordered.length, sourceModalPage, TABLE_PAGE_SIZE, p => { sourceModalPage = p; renderReservedModal(); });
 
       const activeCls = 'px-1 pb-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600 transition-colors';
@@ -3301,14 +3487,26 @@
         if (tabAfter) tabAfter.className = st.order === 'after' ? activeCls : idleCls;
       }
 
+      // Amber note: POs squeezed out by the adjusted deduction order
+      if (noteEl && st.showTabs !== false) {
+        const squeezedCount = st.groups.filter(g => g.squeezed).length;
+        if (isAfter && squeezedCount > 0) {
+          noteEl.textContent = 'Due to the adjusted deduction order, these POs may have no FG stock to deduct; the factory theoretically still has sufficient lead time to replenish continuity/preload inventory, so XF dates are not affected.';
+          noteEl.classList.remove('hidden');
+        } else {
+          noteEl.textContent = st.baseNote || '';
+          noteEl.classList.toggle('hidden', !st.baseNote);
+        }
+      }
+
       if (summaryEl) {
         const total = st.groups.reduce((x, g) => x + reservedGroupTotals(g).qty, 0);
-        const base = st.groups.length + ' POs · total ' + total.toLocaleString() + ' pairs to be deducted';
+        const base = st.groups.length + ' POs · total ' + total.toLocaleString() + ' pairs pre-deducted';
         summaryEl.textContent = st.showTabs === false
           ? base
           : (st.order === 'after'
-            ? base + ' · Target PO 已调整至抵扣顺序最前，优先抵扣'
-            : base + ' · 原计划按 Conf XF 升序逐一抵扣');
+            ? base + ' · Target PO deducts first, then ascending Conf XF order'
+            : base + ' · Original plan: deduct in ascending Conf XF order');
       }
     }
 
@@ -3334,30 +3532,32 @@
       if (!modal || !head || !body) return;
       currentSourceModalOpt = null; // read-only: disable checkbox-based summary updates
 
+      let baseNote = '';
       if (showTabs) {
-        title.textContent = (opt === 'opt1' ? 'Option 1 — C-order FG' : 'Option 2 — Preload FG') + '：抵扣顺序对比';
-        subtitle.textContent = '切换 Tab 查看变化前 / 变化后的抵扣顺序；点击 PO 行可展开到 size level';
+        title.textContent = (opt === 'opt1' ? 'Option 1 — C-order FG' : 'Option 2 — Preload FG') + ' — Deduction Order Comparison';
+        subtitle.textContent = 'Click a PO row to expand to size level';
+        baseNote = '⚠️ This inventory was originally planned to be deducted to the POs below in ascending XF order; earlier POs will be fulfilled by normal production.';
         if (noteEl) {
-          noteEl.textContent = '⚠️ 该库存原计划按交期升序逐一抵扣给以下 PO。标记 Target 的 PO 为本次 Pull-in 目标 PO，将会被优先抵扣（抵扣顺序提前）；其余早期 PO 后续需依赖正常生产履约。';
+          noteEl.textContent = baseNote;
           noteEl.classList.remove('hidden');
         }
       } else {
-        title.textContent = (opt === 'opt1' ? 'Option 1' : 'Option 2') + '：PO list';
-        subtitle.textContent = '点击 PO 行可展开到 size level';
+        title.textContent = (opt === 'opt1' ? 'Option 1' : 'Option 2') + ' — PO list';
+        subtitle.textContent = 'Click a PO row to expand to size level';
         if (noteEl) noteEl.classList.add('hidden');
       }
       if (filterEl) { filterEl.classList.add('hidden'); filterEl.classList.remove('flex'); }
 
-      head.innerHTML = ['#', 'PO number', 'Conf XF date', 'Size', 'PO qty', 'FG10', 'Qty to be deducted']
+      head.innerHTML = ['#', 'PO number', 'Brand', 'Factory', 'Style', 'Color', 'Size', 'Conf XF date', 'Production Status', 'Region', 'PO qty', 'FG10', 'Pre-deducted qty']
         .map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
 
       const groups = buildReservedGroups(type);
-      reservedModalState = { opt, type, order: 'after', groups, showTabs };
+      reservedModalState = { opt, type, order: 'after', groups, showTabs, baseNote };
       sourceModalPage = 1;
       if (tabsEl) tabsEl.classList.toggle('hidden', !showTabs || groups.length === 0);
 
       if (groups.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-sm text-gray-400">No reserved FG</td></tr>';
+        body.innerHTML = '<tr><td colspan="13" class="py-8 text-center text-sm text-gray-400">No reserved FG</td></tr>';
         if (summaryEl) summaryEl.textContent = '';
         renderPager(document.getElementById('source-po-modal-pager'), 0, 1, TABLE_PAGE_SIZE, () => {});
       } else {
@@ -3558,6 +3758,7 @@
     function renderOptionCards() {
       const types = ['c-order', 'preload', 'same-region', 'cross-region'];
       const optMap = { 'c-order': 'opt1', 'preload': 'opt2', 'same-region': 'opt3', 'cross-region': 'opt4' };
+      const allocatedColorCls = { opt1: 'text-blue-700', opt2: 'text-green-700', opt3: 'text-teal-700', opt4: 'text-orange-700' };
       types.forEach(type => {
         const opt = optMap[type];
         const available = getTotalAvailableByType(type);
@@ -3565,7 +3766,27 @@
         const display = document.getElementById(opt + '-available-display');
         if (display) display.innerHTML = available.toLocaleString() + ' <span class="text-sm font-normal">pairs</span>';
         const allocatedDisplay = document.getElementById(opt + '-allocated-display');
-        if (allocatedDisplay) allocatedDisplay.textContent = allocated.toLocaleString();
+        if (allocatedDisplay) {
+          if (allocationStale) {
+            allocatedDisplay.textContent = 'Pending calculation';
+            allocatedDisplay.className = 'text-gray-400 italic text-xs font-normal';
+          } else {
+            allocatedDisplay.textContent = allocated.toLocaleString();
+            allocatedDisplay.className = 'font-bold ' + allocatedColorCls[opt];
+          }
+        }
+
+        // Check-order badge (1, 2, 3…) next to the option title
+        const badge = document.getElementById(opt + '-order-badge');
+        if (badge) {
+          const orderIdx = optionOrder.indexOf(opt);
+          if (orderIdx >= 0) {
+            badge.textContent = 'Step ' + (orderIdx + 1);
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
 
         // Reserved / Idle sub-metrics for pool inventory (Option 1/2)
         if (type === 'c-order' || type === 'preload') {
@@ -3602,11 +3823,14 @@
         if (listContainer) listContainer.classList.toggle('hidden', !checked);
         if (noteEl) {
           const strategy = opt === 'opt3' ? opt3Strategy : opt4Strategy;
+          const tipEl = document.getElementById(opt + '-strategy-note-tip');
           if (strategy === 'strategy1') {
-            noteEl.textContent = '策略1 · 仅取交期晚于目标 PO 的库存';
+            noteEl.textContent = 'Strategy 1 · Only Conf XF date later than the target PO';
+            if (tipEl) tipEl.textContent = 'Strategy 1: Only takes inventory with Conf XF date later than the target PO; it can be "borrowed" first and theoretically does not affect the original PO\'s Conf XF date.';
           } else {
             const r = getStrategy2Range();
-            noteEl.textContent = `策略2 · Target XF ${r.base}${r.isDefault ? '（未选择 Target XF，默认取明天）' : '（用户所选）'} +2 周，取 Conf XF 晚于 ${r.cutoff} 的库存；新交期无法准确预估，待工厂评估`;
+            noteEl.textContent = `Strategy 2 · Conf XF date after ${r.cutoff}; new dates set by factory`;
+            if (tipEl) tipEl.textContent = `Strategy 2: Takes inventory with Conf XF later than ${r.cutoff} (Target XF ${r.base}${r.isDefault ? ', not selected — defaults to tomorrow' : ', user selected'} +2 weeks). Those POs' Conf XF dates will be affected; since actual dates depend on factory capacity, production plan, inventory and other factors, the system cannot reliably estimate them — new dates will be evaluated by the factory.`;
           }
         }
         if (!checked || !countEl || !qtyEl) return;
@@ -3622,6 +3846,19 @@
 
       updateStrategyButtons('opt3', opt3Strategy);
       updateStrategyButtons('opt4', opt4Strategy);
+
+      // opt3/opt4 "View full PO list" only makes sense with fresh results:
+      // while stale, hide the button and show a hint instead (opt1/2 unaffected).
+      ['opt3', 'opt4'].forEach(o => {
+        const btn = document.getElementById(o + '-viewpo-btn');
+        const pending = document.getElementById(o + '-viewpo-pending');
+        if (!btn || !pending) return;
+        btn.classList.toggle('hidden', allocationStale);
+        pending.classList.toggle('hidden', !allocationStale);
+      });
+
+      updateCalculateButton();
+      updateAllocationStaleNote();
     }
 
     function openSourcePOModal(opt, keepPage) {
@@ -3648,13 +3885,13 @@
       title.textContent = opt === 'opt3' ? 'Option 3 — Same-Region Source POs' : 'Option 4 — Cross-Region Source POs';
       const s2range = getStrategy2Range();
       subtitle.textContent = (strategy === 'strategy1'
-        ? 'Strategy 1: Source POs with confirmed XF date later than target PO'
-        : `Strategy 2: Source POs with Conf XF after ${s2range.cutoff}（Target XF ${s2range.base}${s2range.isDefault ? '，未选择，默认取明天' : '，用户所选'} +14 天）`) + ' — check the POs you want to use';
+        ? 'Strategy 1 · Conf XF later than target PO'
+        : `Strategy 2 · Conf XF after ${s2range.cutoff}`) + ' — check the POs you want to use';
 
       // Strategy 2: no Updated ETA estimation (new dates to be evaluated by factory)
       if (noteEl) {
         if (strategy === 'strategy2') {
-          noteEl.textContent = '\u26a0\ufe0f \u7b56\u75652 \u7684\u6e90 PO \u4ea4\u671f\u5c06\u53d7\u5230\u5f71\u54cd\u3002\u7531\u4e8e\u5b9e\u9645\u4ea4\u671f\u53d6\u51b3\u4e8e\u5de5\u5382\u4ea7\u80fd\u3001\u751f\u4ea7\u8ba1\u5212\u4e0e\u5e93\u5b58\u7b49\u7efc\u5408\u56e0\u7d20\uff0c\u7cfb\u7edf\u65e0\u6cd5\u51c6\u786e\u9884\u4f30\u65b0\u4ea4\u671f\uff0c\u5f85\u5de5\u5382\u6839\u636e\u5b9e\u9645\u60c5\u51b5\u8bc4\u4f30\u540e\u786e\u8ba4\u3002';
+          noteEl.textContent = '⚠️ Strategy 2: source POs\' Conf XF dates will be affected; new dates cannot be reliably estimated and will be confirmed by the factory.';
           noteEl.classList.remove('hidden');
         } else {
           noteEl.classList.add('hidden');
@@ -3682,7 +3919,7 @@
       // Headers: checkbox + columns (Updated ETA column removed)
       let headHtml = '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500 w-8"><input type="checkbox" id="source-po-select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleAllSourcePOs(this.checked)"></th>';
       if (includeRegion) headHtml += '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">Region</th>';
-      headHtml += ['Source PO', 'Project Type', 'Conf XF date', 'PO qty', 'Style', 'Color', 'Size', 'FG inventory'].map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
+      headHtml += ['Source PO', 'Project Type', 'Conf XF date', 'PO qty', 'Style', 'Color', 'Size', 'FG inventory', 'Allocated'].map(h => '<th class="text-left px-3 py-2 text-xs font-medium text-gray-500">' + h + '</th>').join('');
       head.innerHTML = headHtml;
 
       let sources = inventorySources.filter(s => s.sourceType === type && s.allowed);
@@ -3691,7 +3928,10 @@
       }
       sources.sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
 
-      const colSpan = includeRegion ? 10 : 9;
+      const colSpan = includeRegion ? 11 : 10;
+      // Allocated qty per source (from the current allocation plan)
+      const allocBySourceId = {};
+      allocations.forEach(a => { allocBySourceId[a.sourceId] = (allocBySourceId[a.sourceId] || 0) + a.qty; });
       sourceModalGroups = groupRowsByPO(sources, sourcePOGroupKey).map(g => ({ key: g.key, items: g.items, type: type }));
       sourceModalGroups.sort((a, b) => new Date(a.items[0].xfDate) - new Date(b.items[0].xfDate));
 
@@ -3710,6 +3950,7 @@
           const first = items[0];
           const sumPoQty = items.reduce((sum, s) => sum + (s.poQty || s.originalQty || 0), 0);
           const sumFg = items.reduce((sum, s) => sum + (s.originalQty || s.qty || 0), 0);
+          const sumAlloc = items.reduce((sum, s) => sum + (allocBySourceId[s.id] || 0), 0);
           const checked = !deselected.has(g.key);
           const cbCell = '<td class="px-3 py-2" onclick="event.stopPropagation()"><input type="checkbox" data-spo-idx="' + gi + '" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="toggleSourcePOByIdx(' + gi + ', this.checked)"' + (checked ? ' checked' : '') + '></td>';
           const cbCellChild = '<td class="px-3 py-1.5"></td>';
@@ -3727,6 +3968,7 @@
               + '<td class="px-3 py-2 text-gray-600">' + first.color + '</td>'
               + '<td class="px-3 py-2 text-gray-600">' + first.size + '</td>'
               + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + sumFg.toLocaleString() + '</td>'
+              + '<td class="px-3 py-2 text-right font-medium text-blue-700">' + sumAlloc.toLocaleString() + '</td>'
               + '</tr>';
             return;
           }
@@ -3742,6 +3984,7 @@
             + '<td class="px-3 py-2 text-gray-600">' + first.color + '</td>'
             + '<td class="px-3 py-2 text-gray-400 text-xs">' + items.length + ' sizes</td>'
             + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + sumFg.toLocaleString() + '</td>'
+            + '<td class="px-3 py-2 text-right font-medium text-blue-700">' + sumAlloc.toLocaleString() + '</td>'
             + '</tr>';
           items.forEach(s => {
             html += '<tr class="size-detail-row ' + cls + (isOpen ? '' : ' hidden') + ' ' + dim + '">'
@@ -3754,6 +3997,7 @@
               + '<td class="px-3 py-1.5"></td>'
               + '<td class="px-3 py-1.5 text-gray-600">' + s.size + '</td>'
               + '<td class="px-3 py-1.5 text-right text-gray-700">' + (s.originalQty || s.qty || 0).toLocaleString() + '</td>'
+              + '<td class="px-3 py-1.5 text-right text-gray-500">' + (allocBySourceId[s.id] || 0).toLocaleString() + '</td>'
               + '</tr>';
           });
         });
@@ -3835,10 +4079,9 @@
     }
 
     function reallocateSourceType(type) {
-      const opt = type === 'same-region' ? 'opt3' : 'opt4';
-      const check = document.getElementById(opt + '-check');
-      if (check && check.checked) allocateAll(type);
-      else recalc();
+      // Source PO selection changed — results are stale until the user
+      // clicks "Calculate Allocation" again.
+      markAllocationStale();
     }
 
     function setSourceModalRegion(region) {
@@ -4045,7 +4288,7 @@
       return styleMatch && colorMatch;
     }
 
-    // Live-update the hint under Target XF: "将会筛选出交期晚于 XX 的 PO..."
+    // Live-update the hint under Target XF: "POs with Conf XF later than XX..."
     function updateXfFilterHint() {
       const dateEl = document.getElementById('xf-filter-hint-date');
       if (!dateEl) return;
@@ -4054,7 +4297,7 @@
         dateEl.textContent = v;
         dateEl.className = 'font-semibold text-blue-700';
       } else {
-        dateEl.textContent = '所选日期';
+        dateEl.textContent = 'the selected date';
         dateEl.className = 'font-semibold text-gray-400';
       }
     }
@@ -4132,10 +4375,13 @@
     function splitOpenPOsByDate(matchFn, targetXfDate) {
       const before = [];
       const after = [];
+      const fg14ExcludedPOs = new Set();
       (realData || []).forEach(r => {
         if (!r.conf_xf_date) return;
         if (!isNotShippedStatus(r.po_production_status)) return;
         if (matchFn && !matchFn(r)) return;
+        // Exclude POs that already started partial shipping (FG14 completion qty > 0)
+        if (Number(r.fg14_qty) > 0) { if (r.po_number) fg14ExcludedPOs.add(String(r.po_number)); return; }
         if (r.conf_xf_date <= targetXfDate) before.push(r);
         else after.push(r);
       });
@@ -4180,7 +4426,7 @@
       const rows = (side === 'before' ? lastSupplyBefore : lastSupplyAfter).slice()
         .sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || '') ||
           String(a.po_number || '').localeCompare(String(b.po_number || '')));
-      if (titleEl) titleEl.textContent = side === 'before' ? '交期前待出货 PO 明细' : '交期后可 Pull-in PO 明细';
+      if (titleEl) titleEl.textContent = side === 'before' ? 'POs Shipping Before Expected XF' : 'Pull-in Candidate POs After Expected XF';
       const totalQty = rows.reduce((s, r) => s + (Number(r.po_qty) || 0), 0);
       const poCount = new Set(rows.map(r => r.po_number).filter(Boolean)).size;
       if (subtitleEl) subtitleEl.textContent = `${poCount} POs · ${totalQty.toLocaleString()} pairs`;
@@ -4197,7 +4443,7 @@
       const rows = supplyModalRows;
       const groups = groupRowsByPO(rows, r => String(r.po_number || '-') + '|' + String(r.style_number || '-') + '|' + String(r.color_code || '-'));
       if (groups.length === 0) {
-        body.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400">无符合条件的 PO</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-sm text-gray-400">No matching POs</td></tr>';
       } else {
         const spPages = Math.max(1, Math.ceil(groups.length / TABLE_PAGE_SIZE));
         if (supplyModalPage > spPages) supplyModalPage = spPages;
@@ -4420,7 +4666,7 @@
       deselectedOpt4POs.clear();
       const selected = candidateItems.filter(r => selectedCandidateIds.has(r.id));
       if (selected.length === 0) {
-        alert('请至少选择一个 PO');
+        alert('Please select at least one PO');
         return;
       }
       buildRealScenario(selected, '');
@@ -4449,6 +4695,9 @@
         const impact = document.getElementById(opt + '-impact');
         if (impact) impact.classList.add('hidden');
       });
+      optionOrder = [];
+      allocationStale = true;
+      allocationCalculated = false;
       deselectedOpt3POs.clear();
       deselectedOpt4POs.clear();
       document.getElementById('candidate-section').classList.add('hidden');
@@ -4464,12 +4713,12 @@
       if (entryMode === 'style') {
         const targetXfDate = document.getElementById('request-xf-date').value;
         if (!targetXfDate) {
-          alert('请在「Expected XF date」中选择日期');
+          alert('Please select an Expected XF date');
           return;
         }
         const matcher = getStyleColorMatcher('style');
         if (!matcher) {
-          alert('请填写 Style Number / Color Code');
+          alert('Please enter Style Number / Color Code');
           return;
         }
         const { before, after } = splitOpenPOsByDate(matcher, targetXfDate);
@@ -4483,9 +4732,9 @@
           return;
         }
         candidateItems = after;
-        selectedCandidateIds = new Set(); // default: none selected; user picks POs manually
+        selectedCandidateIds = new Set(candidateItems.map(r => r.id)); // default: all candidates selected (system-recommended set)
         const csEl = document.getElementById('candidate-subtitle');
-        if (csEl) csEl.textContent = `共 ${new Set(after.map(r => r.po_number)).size} 个 PO 的 Conf XF 晚于 Expected XF date（需要提前的订单）；勾选后进入缺口分析`;
+        if (csEl) csEl.textContent = `${new Set(after.map(r => r.po_number)).size} PO(s) after Expected XF (${targetXfDate}), all selected by default; adjust and run gap analysis`;
         renderCandidateTable();
         document.getElementById('candidate-section').classList.remove('hidden');
         return;
@@ -4494,25 +4743,25 @@
       if (entryMode === 'qty') {
         const targetXfDate = document.getElementById('request-xf-date').value;
         if (!targetXfDate) {
-          alert('请在「Expected XF date」中选择日期');
+          alert('Please select an Expected XF date');
           return;
         }
         const expectedQty = Number(document.getElementById('qty-input').value) || 0;
         if (expectedQty <= 0) {
-          alert('请填写大于 0 的 Expected Qty');
+          alert('Please enter an Expected Qty greater than 0');
           return;
         }
-        const matcher = getStyleColorMatcher('qty'); // null = 不限 Style-Color，匹配全部
+        const matcher = getStyleColorMatcher('qty'); // null = no Style-Color filter, match all
         const { before, after } = splitOpenPOsByDate(matcher, targetXfDate);
         renderSupplyOverview(before, after, targetXfDate);
         hideDownstream();
         if (after.length === 0) {
-          // 总览卡已呈现 0，无需 alert，也不展示候选区
+          // Overview cards already show 0; no alert needed, and the candidate section stays hidden
           candidateItems = [];
           selectedCandidateIds = new Set();
           return;
         }
-        // 按 Conf XF 从近到远依次累加，直到覆盖 Expected Qty（至少取 1 条）
+        // Accumulate by Conf XF from nearest to farthest until Expected Qty is covered (at least 1 row)
         const sorted = after.slice().sort((a, b) => (a.conf_xf_date || '').localeCompare(b.conf_xf_date || ''));
         const candidates = [];
         let coveredQty = 0;
@@ -4522,10 +4771,10 @@
           coveredQty += Number(r.po_qty) || 0;
         }
         candidateItems = candidates;
-        // 系统按需求量推荐的集合，默认勾选，可手动调整
+        // System-recommended set based on required qty; checked by default, manually adjustable
         selectedCandidateIds = new Set(candidates.map(r => r.id));
         const csEl = document.getElementById('candidate-subtitle');
-        if (csEl) csEl.textContent = `按交期从近到远选取，累计 ${coveredQty.toLocaleString()} pairs 覆盖 Expected Qty ${expectedQty.toLocaleString()}；可手动调整`;
+        if (csEl) csEl.textContent = `${new Set(candidates.map(r => r.po_number)).size} PO(s) after Expected XF (${targetXfDate}), all selected by default; adjust and run gap analysis`;
         renderCandidateTable();
         document.getElementById('candidate-section').classList.remove('hidden');
         return;
@@ -4633,31 +4882,37 @@
       let filtered = [];
       let truncatedNote = noteOverride || '';
       if (rowsOverride && Array.isArray(rowsOverride)) {
-        filtered = rowsOverride;
+        // Exclude POs that already started partial shipping (FG14 completion qty > 0)
+        filtered = rowsOverride.filter(r => !(Number(r.fg14_qty) > 0));
+        updateFg14Notice('fg14-notice-po', []);
       } else {
         const xfFrom = document.getElementById('xf-from').value || '2026-08-01';
         const xfTo = document.getElementById('xf-to').value || '2026-10-31';
         const poText = document.getElementById('po-list-input').value;
         const poTokens = poText.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
         const poSet = new Set(poTokens.map(s => s.replace(/^PO#?/i, '')));
+        const fg14ExcludedPOs = new Set();
 
         filtered = realData.filter(r => {
           if (r.conf_xf_date && (r.conf_xf_date < xfFrom || r.conf_xf_date > xfTo)) return false;
           if (poSet.size > 0 && !poSet.has(String(r.po_number))) return false;
+          // Exclude POs that already started partial shipping (FG14 completion qty > 0)
+          if (Number(r.fg14_qty) > 0) { if (r.po_number) fg14ExcludedPOs.add(String(r.po_number)); return false; }
           return true;
         });
-
         // Fallback: if PO list was specified but matched nothing, ignore PO filter and show all rows in date range
         if (filtered.length === 0 && poSet.size > 0) {
+          fg14ExcludedPOs.clear();
           const dateOnly = realData.filter(r => {
             if (r.conf_xf_date && (r.conf_xf_date < xfFrom || r.conf_xf_date > xfTo)) return false;
+            if (Number(r.fg14_qty) > 0) { if (r.po_number) fg14ExcludedPOs.add(String(r.po_number)); return false; }
             return true;
           });
           if (dateOnly.length > 0) {
             filtered = dateOnly;
-            truncatedNote = `PO list did not match any loaded data; showing ${filtered.length.toLocaleString()} rows within the date range.`;
           }
         }
+        updateFg14Notice('fg14-notice-po', [...fg14ExcludedPOs]);
 
         if (filtered.length > 500) {
           filtered.sort((a, b) => (b.shortage || 0) - (a.shortage || 0));
@@ -4678,7 +4933,14 @@
         xfDate: r.conf_xf_date,
         demand: r.po_qty || 0,
         fg: r.fg_inventory || 0,
-        shortage: r.shortage || Math.max(0, (r.po_qty || 0) - (r.fg_inventory || 0))
+        shortage: r.shortage || Math.max(0, (r.po_qty || 0) - (r.fg_inventory || 0)),
+        brand: r.brand || '',
+        factory_name: r.factory_name || '',
+        style_number: String(r.style_number || ''),
+        style_name: r.style_name || '',
+        color_code: r.color_code || '',
+        target_region: r.target_region || '',
+        po_production_status: r.po_production_status || ''
       }));
 
       inventorySources = [];
@@ -4859,14 +5121,12 @@
         });
       }
       applyOptionStrategies();
-      if (check && check.checked && type) {
-        allocateAll(type);
-      } else {
-        recalc();
-      }
+      markAllocationStale();
     }
 
     // ===== Toggle Options =====
+    // Checking an option only records the check order and marks the allocation
+    // stale; actual allocation runs when the user clicks "Calculate Allocation".
     function toggleOption(opt) {
       const card = document.getElementById(opt + '-card');
       const check = document.getElementById(opt + '-check');
@@ -4877,11 +5137,11 @@
       if (check.checked) {
         card.classList.add('selected');
         if (impact) impact.classList.remove('hidden');
-        // Auto-allocate all available inventory of this type
-        if (type) allocateAll(type);
+        if (!optionOrder.includes(opt)) optionOrder.push(opt);
       } else {
         card.classList.remove('selected');
         if (impact) impact.classList.add('hidden');
+        optionOrder = optionOrder.filter(o => o !== opt);
         // Clear allocations of this type when unchecked
         if (type) {
           allocations = allocations.filter(a => {
@@ -4889,8 +5149,44 @@
             return !src || src.sourceType !== type;
           });
         }
-        recalc();
       }
+      markAllocationStale();
+    }
+
+    // Mark allocation results as out-of-date and refresh the dependent UI
+    // (order badges, '—' allocated displays, Calculate button, stale note,
+    // confirm button) without recomputing allocations.
+    function markAllocationStale() {
+      allocationStale = true;
+      recalc();
+    }
+
+    // Run the allocation sequentially in the user's check order. All types share
+    // one gap pool: each target's remaining shortage is reduced as earlier types
+    // allocate, so later types only cover what is left.
+    function calculateAllocation() {
+      if (optionOrder.length === 0) return;
+      const optToType = { opt1: 'c-order', opt2: 'preload', opt3: 'same-region', opt4: 'cross-region' };
+      resetAllocations();
+      optionOrder.forEach(opt => {
+        const type = optToType[opt];
+        if (type) allocateAll(type);
+      });
+      allocationStale = false;
+      allocationCalculated = true;
+      recalc();
+    }
+
+    function updateCalculateButton() {
+      const btn = document.getElementById('calculate-allocation-btn');
+      if (btn) btn.disabled = optionOrder.length === 0;
+    }
+
+    // Amber warning above the Allocation Matrix: only after the first
+    // calculation, and only while results are stale.
+    function updateAllocationStaleNote() {
+      const note = document.getElementById('allocation-stale-note');
+      if (note) note.classList.toggle('hidden', !(allocationStale && allocationCalculated));
     }
 
     // ===== Recalculate Everything =====
@@ -4977,22 +5273,19 @@
       renderOptionCards();
       renderAllocationMatrix();
 
-      // Enable/disable confirm button
-      document.getElementById('confirm-btn').disabled = total === 0;
+      // Enable/disable confirm button (requires a fresh, non-empty calculation)
+      document.getElementById('confirm-btn').disabled = allocationStale || optionOrder.length === 0 || total === 0;
     }
 
     function updateBreakdown(opt1, opt2, opt3, opt3Cost, opt4, opt4Cost, wipRepackCost, totalRepackCost) {
       const tbody = document.getElementById('breakdown-body');
       const rows = [];
 
-      // Calculate ETA dates
+      // Calculate ETA dates (all options: today + 14 days)
       const today = new Date();
-      const week1Date = new Date(today);
-      week1Date.setDate(today.getDate() + 7);
       const week2Date = new Date(today);
       week2Date.setDate(today.getDate() + 14);
       const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const etaW1 = fmt(week1Date) + ' <span class="text-xs text-green-600">(W1)</span>';
       const etaW2 = fmt(week2Date) + ' <span class="text-xs text-blue-600">(W2)</span>';
 
       if (opt1 > 0) {
@@ -5002,8 +5295,7 @@
             <td class="px-3 py-2.5 text-gray-600">C-order FG</td>
             <td class="px-3 py-2.5 text-right font-bold">${opt1.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
-            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
-            <td class="px-3 py-2.5 text-xs text-gray-600">This FG was already reserved for the target POs; deduction point not yet reached (C-order: PO XF − 49 days), so not yet offset to the POs. Factory should deduct ASAP. No other impact.</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
           </tr>
         `);
       }
@@ -5014,8 +5306,7 @@
             <td class="px-3 py-2.5 text-gray-600">Preload FG</td>
             <td class="px-3 py-2.5 text-right font-bold">${opt2.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to deduct + 3-7 days inspection</td>
-            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW1}</td>
-            <td class="px-3 py-2.5 text-xs text-gray-600">This FG was already reserved for the target POs; deduction point not yet reached (Preload: PO XF − 77 days), so not yet offset to the POs. Factory should deduct ASAP. No other impact.</td>
+            <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
           </tr>
         `);
       }
@@ -5027,7 +5318,6 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt3.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
-            <td class="px-3 py-2.5 text-gray-600">${opt3Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO XF dates will be impacted; new dates cannot be reliably estimated and will be confirmed by the factory.'}</td>
           </tr>
         `);
       }
@@ -5039,7 +5329,6 @@
             <td class="px-3 py-2.5 text-right font-bold">${opt4.toLocaleString()}</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">Few days to repack + 3-7 days inspection</td>
             <td class="px-3 py-2.5 text-xs text-gray-600">${etaW2}</td>
-            <td class="px-3 py-2.5 text-gray-600">${opt4Strategy === 'strategy1' ? 'Strategy 1: Borrow from later-dated PO FG; no impact on original PO ETA.' : 'Strategy 2: Source PO XF dates will be impacted; new dates cannot be reliably estimated and will be confirmed by the factory.'}</td>
           </tr>
         `);
       }
@@ -5047,7 +5336,7 @@
       if (rows.length === 0) {
         tbody.innerHTML = `
           <tr id="breakdown-empty">
-            <td colspan="6" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
+            <td colspan="5" class="px-3 py-6 text-center text-gray-400 text-sm">No options selected. Check options above to build your scenario.</td>
           </tr>
         `;
       } else {
@@ -5074,32 +5363,32 @@
       const poolCard = (opt, type, label, colors) => {
         const groups = buildReservedGroups(type);
         if (!groups.length) return;
-        const total = groups.reduce((x, g) => x + reservedGroupTotals(g).qty, 0);
         cards.push(`
           <div class="${colors.wrap} rounded-lg p-3">
-            <div class="text-xs font-semibold ${colors.title} mb-1">${label}（抵扣优先级调整）</div>
-            <div class="text-sm ${colors.text}">本次共抵扣 ${total.toLocaleString()} pairs。该库存原计划按交期升序抵扣给 ${groups.length} 个 PO，本次 Pull-in 将 Target PO 调整至抵扣顺序最前、优先抵扣。</div>
+            <div class="text-xs font-semibold ${colors.title} mb-1">${label} (Deduction Priority)</div>
+            <div class="text-sm ${colors.text}">Deduction priority adjusted — the Target PO will deduct first; theoretically no impact on other POs' XF dates. View full list for details.</div>
             <div class="mt-2">
-              <button type="button" onclick="openReservedPOModal('${opt}')" class="text-xs font-medium ${colors.link} underline">View full PO list · 对比变化前后抵扣顺序</button>
+              <button type="button" onclick="openReservedPOModal('${opt}')" class="text-xs font-medium ${colors.link} underline">View full PO list · Compare before/after deduction order</button>
             </div>
           </div>
         `);
       };
-      if (opt1Checked) poolCard('opt1', 'c-order', 'Option 1 — C-order FG', { wrap: 'bg-blue-50 border border-blue-200', title: 'text-blue-800', text: 'text-blue-700', link: 'text-blue-700 hover:text-blue-900' });
-      if (opt2Checked) poolCard('opt2', 'preload', 'Option 2 — Preload FG', { wrap: 'bg-green-50 border border-green-200', title: 'text-green-800', text: 'text-green-700', link: 'text-green-700 hover:text-green-900' });
+      // Only show options that are checked AND actually used by the allocation
+      if (opt1Checked && getTotalAllocatedByType('c-order') > 0) poolCard('opt1', 'c-order', 'Option 1 — C-order FG', { wrap: 'bg-blue-50 border border-blue-200', title: 'text-blue-800', text: 'text-blue-700', link: 'text-blue-700 hover:text-blue-900' });
+      if (opt2Checked && getTotalAllocatedByType('preload') > 0) poolCard('opt2', 'preload', 'Option 2 — Preload FG', { wrap: 'bg-green-50 border border-green-200', title: 'text-green-800', text: 'text-green-700', link: 'text-green-700 hover:text-green-900' });
 
-      if (opt3Checked) {
+      if (opt3Checked && getTotalAllocatedByType('same-region') > 0) {
         const strategy = opt3Strategy;
         const type = 'same-region';
         const sources = inventorySources.filter(s => s.sourceType === type && s.allowed && isSourcePOSelected(s));
         const po = poCount(sources);
         const pairs = totalPairs(sources);
         const text = strategy === 'strategy1'
-          ? '策略1：仅借用同区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
-          : '策略2：这些源 PO 的交期将受影响；由于实际交期取决于工厂产能、生产计划与库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估后确认。';
+          ? 'Strategy 1: Only borrows same-region inventory with Conf XF date later than the target PO; theoretically no impact on original PO dates.'
+          : 'Strategy 2: These source POs\' Conf XF dates will be affected; since actual dates depend on factory capacity, production plan, inventory and other factors, the system cannot reliably estimate them — new dates will be evaluated and confirmed by the factory.';
         cards.push(`
           <div class="bg-teal-50 border border-teal-200 rounded-lg p-3">
-            <div class="text-xs font-semibold text-teal-800 mb-1">Option 3 — Same Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
+            <div class="text-xs font-semibold text-teal-800 mb-1">Option 3 — Same Region Re-route (${strategy === 'strategy1' ? 'Strategy 1' : 'Strategy 2'})</div>
             <div class="text-sm text-teal-700">${text}</div>
             <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
               <div class="bg-white rounded border border-teal-100 p-2">
@@ -5107,12 +5396,12 @@
                 <div class="font-bold text-teal-800">${po.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-teal-100 p-2">
-                <div class="text-gray-500">受影响 Pairs</div>
+                <div class="text-gray-500">Affected Pairs</div>
                 <div class="font-bold text-teal-800">${pairs.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-teal-100 p-2">
-                <div class="text-gray-500">新交期评估</div>
-                <div class="font-bold text-teal-800">${strategy === 'strategy1' ? '无影响' : '待工厂评估'}</div>
+                <div class="text-gray-500">New XF Evaluation</div>
+                <div class="font-bold text-teal-800">${strategy === 'strategy1' ? 'No impact' : 'Pending factory evaluation'}</div>
               </div>
             </div>
             <div class="mt-2">
@@ -5122,18 +5411,18 @@
         `);
       }
 
-      if (opt4Checked) {
+      if (opt4Checked && getTotalAllocatedByType('cross-region') > 0) {
         const strategy = opt4Strategy;
         const type = 'cross-region';
         const sources = inventorySources.filter(s => s.sourceType === type && s.allowed && isSourcePOSelected(s));
         const po = poCount(sources);
         const pairs = totalPairs(sources);
         const text = strategy === 'strategy1'
-          ? '策略1：仅借用跨区交期晚于目标 PO 的库存，理论上不影响原 PO 交期。'
-          : '策略2：这些源 PO 的交期将受影响；由于实际交期取决于工厂产能、生产计划与库存等综合因素，系统无法准确预估，新交期待工厂根据实际情况评估后确认。';
+          ? 'Strategy 1: Only borrows cross-region inventory with Conf XF date later than the target PO; theoretically no impact on original PO dates.'
+          : 'Strategy 2: These source POs\' Conf XF dates will be affected; since actual dates depend on factory capacity, production plan, inventory and other factors, the system cannot reliably estimate them — new dates will be evaluated and confirmed by the factory.';
         cards.push(`
           <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <div class="text-xs font-semibold text-orange-800 mb-1">Option 4 — Cross-Region Re-route（${strategy === 'strategy1' ? '策略1' : '策略2'}）</div>
+            <div class="text-xs font-semibold text-orange-800 mb-1">Option 4 — Cross-Region Re-route (${strategy === 'strategy1' ? 'Strategy 1' : 'Strategy 2'})</div>
             <div class="text-sm text-orange-700">${text}</div>
             <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
               <div class="bg-white rounded border border-orange-100 p-2">
@@ -5141,12 +5430,12 @@
                 <div class="font-bold text-orange-800">${po.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-orange-100 p-2">
-                <div class="text-gray-500">受影响 Pairs</div>
+                <div class="text-gray-500">Affected Pairs</div>
                 <div class="font-bold text-orange-800">${pairs.toLocaleString()}</div>
               </div>
               <div class="bg-white rounded border border-orange-100 p-2">
-                <div class="text-gray-500">新交期评估</div>
-                <div class="font-bold text-orange-800">${strategy === 'strategy1' ? '无影响' : '待工厂评估'}</div>
+                <div class="text-gray-500">New XF Evaluation</div>
+                <div class="font-bold text-orange-800">${strategy === 'strategy1' ? 'No impact' : 'Pending factory evaluation'}</div>
               </div>
             </div>
             <div class="mt-2">
@@ -5179,6 +5468,9 @@
       selectedOpt4 = [];
       deselectedOpt3POs.clear();
       deselectedOpt4POs.clear();
+      optionOrder = [];
+      allocationStale = true;
+      allocationCalculated = false;
       recalc();
     }
 
@@ -5269,11 +5561,6 @@
     function closeConfirmModal() {
       document.getElementById('confirm-modal').classList.add('hidden');
       document.body.style.overflow = '';
-    }
-
-    function copyActionList() {
-      const text = document.getElementById('action-table-body').innerText;
-      navigator.clipboard.writeText(text).then(() => alert('Action list copied to clipboard!'));
     }
 
     function exportActionList() {
@@ -5498,6 +5785,11 @@
           if (impact) impact.classList.remove('hidden');
         }
       });
+      // Restored allocations come from a saved (already calculated) plan; the
+      // original check order is not persisted, so badges use the default order.
+      optionOrder = ['opt1', 'opt2', 'opt3', 'opt4'].filter(opt => scheme.options[opt] && scheme.options[opt].selected);
+      allocationStale = false;
+      allocationCalculated = allocations.length > 0;
 
       // Load execution inputs if any
       document.getElementById('execution-feedback').value = scheme.execution?.feedback || '';
@@ -6090,6 +6382,12 @@
     // ===== Initialize =====
     function initApp() {
       updateRoleAndTabUI();
+      // Date pickers only allow dates from tomorrow onwards
+      const tomorrowISO = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+      ['xf-from', 'xf-to', 'request-xf-date'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.min = tomorrowISO;
+      });
       // Sample 1: Draft scheme for SPT to work on
       const sample1 = createNewSchemeData();
       sample1.name = 'EMEA July Pull-forward Demo';
@@ -6111,11 +6409,18 @@
         actuals: { opt1: 0, opt2: 0, opt3: 0, opt4: 0 },
         feedback: 'PO-level allocation executed. Factories confirmed pull-in dates.'
       };
-      sample2.resultFeedbackToRegion = '实际可执行数量待 PO-level allocation 完成后更新。';
+      sample2.resultFeedbackToRegion = 'Executable qty will be updated after PO-level allocation is completed.';
       schemes.push(sample2);
 
       currentSchemeId = sample1.id;
       loadSchemeIntoUI(sample1);
+
+      // Expected XF date defaults to tomorrow (same basis as the min set above)
+      const reqXfInit = document.getElementById('request-xf-date');
+      if (reqXfInit && !reqXfInit.value) {
+        reqXfInit.value = tomorrowISO;
+        updateXfFilterHint();
+      }
 
       // Load the embedded default dataset on first load
       if (typeof DEFAULT_DEMO_DATA !== 'undefined' && DEFAULT_DEMO_DATA.length > 0) {
@@ -6131,7 +6436,7 @@
         loadScenario();
       }
 
-      switchTab('detail');
+      switchTab('schemes');
     }
 
     initApp();
@@ -6157,7 +6462,7 @@
           <div class="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
             <div class="text-sm font-bold text-blue-800 mb-2">Scenario Recap</div>
             <div class="grid grid-cols-2 gap-4 text-sm">
-              <div><span class="text-gray-500">Gap to Fill:</span> <span class="font-bold" id="modal-gap">6,792 pairs</span></div>
+              <div><span class="text-gray-500">Shortage:</span> <span class="font-bold" id="modal-gap">6,792 pairs</span></div>
               <div><span class="text-gray-500">Total Support:</span> <span class="font-bold text-blue-700" id="modal-total-support">0 pairs</span></div>
             </div>
           </div>
@@ -6185,10 +6490,6 @@
         </div>
         <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
           <button onclick="closeConfirmModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-sm">Close</button>
-          <button onclick="copyActionList()" class="px-4 py-2 bg-white border border-blue-300 text-blue-700 font-medium rounded-lg hover:bg-blue-50 text-sm flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-            Copy Action List
-          </button>
           <button onclick="exportActionList()" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Export CSV
@@ -6215,8 +6516,8 @@
           <div id="source-po-modal-note" class="hidden mb-3 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800"></div>
           <div id="source-po-modal-tabs" class="hidden mb-1 border-b border-gray-200">
             <div class="flex space-x-5">
-              <button type="button" id="reserved-tab-before" onclick="switchReservedModalTab('before')" class="px-1 pb-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">变化前 · 原计划抵扣顺序</button>
-              <button type="button" id="reserved-tab-after" onclick="switchReservedModalTab('after')" class="px-1 pb-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600 transition-colors">变化后 · 本次 Pull-in 抵扣顺序</button>
+              <button type="button" id="reserved-tab-before" onclick="switchReservedModalTab('before')" class="px-1 pb-2 text-xs font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">Before · Original Deduction Order</button>
+              <button type="button" id="reserved-tab-after" onclick="switchReservedModalTab('after')" class="px-1 pb-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600 transition-colors">After · Pull-in Deduction Order</button>
             </div>
           </div>
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3 mt-2">
@@ -6246,7 +6547,7 @@
       <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col pointer-events-auto">
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <h3 class="font-bold text-gray-900" id="supply-po-modal-title">PO 明细</h3>
+            <h3 class="font-bold text-gray-900" id="supply-po-modal-title">PO Details</h3>
             <p class="text-xs text-gray-500 mt-0.5" id="supply-po-modal-subtitle"></p>
           </div>
           <button onclick="closeSupplyPOModal()" class="text-gray-400 hover:text-gray-600">
