@@ -832,7 +832,7 @@
           </div>
           <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Available in <strong id="opt3-target-region" class="text-teal-700">EMEA</strong></span>
+              <span class="text-sm text-gray-600">Physical FG inventory in <strong id="opt3-target-region" class="text-teal-700">EMEA</strong></span>
               <span class="text-base font-bold text-gray-900" id="opt3-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
             <div class="flex items-center justify-between text-sm mt-1">
@@ -893,7 +893,7 @@
           </div>
           <div class="mt-3 bg-gray-50 rounded-lg px-3 py-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm text-gray-600">Available outside <strong id="opt4-target-region" class="text-orange-700">EMEA</strong></span>
+              <span class="text-sm text-gray-600">Physical FG inventory outside <strong id="opt4-target-region" class="text-orange-700">EMEA</strong></span>
               <span class="text-base font-bold text-gray-900" id="opt4-available-display">0 <span class="text-xs font-normal text-gray-500">pairs</span></span>
             </div>
             <div class="flex items-center justify-between text-sm mt-1">
@@ -3449,17 +3449,16 @@
       // Group-level poQty = sum of size-level poQty
       groups.forEach(g => { g.poQty = g.sizes.reduce((x, s) => x + (s.poQty || 0), 0); });
 
-      // Coverage: does the pool's total available FG (sum of all size-level fg)
-      // cover each PO's pre-deducted qty under a given deduction order? Walk the
-      // order accumulating pre-deducted qty; once the cumulative total exceeds
-      // availability, that PO and all later ones are not covered.
+      // Coverage rule (per PRD): cap = pool's total Physical FG inventory (Σ fg).
+      // Walk the deduction order accumulating each PO's PO qty; the first PO whose
+      // cumulative PO qty exceeds the cap — and every PO after it — is not covered.
       const totalAvailable = groups.reduce((x, g) => x + g.sizes.reduce((y, s) => y + s.fg, 0), 0);
       const computeCoverage = (ordered) => {
         const covered = new Map();
         let cum = 0;
         let ok = true;
         ordered.forEach(g => {
-          cum += g.sizes.reduce((y, s) => y + s.qty, 0);
+          cum += g.poQty || 0;
           if (ok && cum <= totalAvailable) covered.set(g.po, true);
           else { ok = false; covered.set(g.po, false); }
         });
@@ -3512,7 +3511,7 @@
         const covered = isAfter ? g.coveredAfter !== false : g.coveredBefore !== false;
         const dimCls = covered ? '' : ' opacity-50';
         const covTag = !covered && !(isAfter && g.squeezed)
-          ? ' <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700" style="font-size:10px">Not covered by reserved stock</span>' : '';
+          ? ' <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700" style="font-size:10px">Not covered by reserved FG</span>' : '';
         const sqzTag = isAfter && g.squeezed
           ? ' <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700" style="font-size:10px">Squeezed out</span>' : '';
         const hitTag = covered && g.isTarget
@@ -3778,7 +3777,9 @@
     }
 
     function getTotalAvailableByType(type) {
-      return inventorySources.filter(s => s.sourceType === type && isSourcePOSelected(s)).reduce((sum, s) => sum + s.qty, 0);
+      // Always the total FG inventory of the whole source PO list of this type —
+      // unaffected by the user's checkbox selection in the source PO modal.
+      return inventorySources.filter(s => s.sourceType === type).reduce((sum, s) => sum + s.qty, 0);
     }
 
     function getTotalAllocatedByType(type) {
@@ -3827,22 +3828,20 @@
         const src = inventorySources.find(s => s.id === a.sourceId);
         return !src || src.sourceType !== type;
       });
-      // Sort sources by target shortage descending; skip source POs the user deselected
+      // Sort sources by target Conf XF date ascending (earliest target first); skip source POs the user deselected
       const sources = inventorySources.filter(s => s.sourceType === type && isSourcePOSelected(s)).sort((a, b) => {
         const ta = targetItems.find(t => t.id === a.targetId);
         const tb = targetItems.find(t => t.id === b.targetId);
-        return (tb ? tb.shortage : 0) - (ta ? ta.shortage : 0);
+        return String(ta ? ta.xfDate : '').localeCompare(String(tb ? tb.xfDate : ''));
       });
       sources.forEach(src => {
         const target = targetItems.find(t => t.id === src.targetId);
         if (!target) return;
         const remainingTarget = getTargetRemaining(target.id);
         if (remainingTarget <= 0) return;
-        // Pool inventory (C-order / Preload): only the reserved portion is requisitioned —
-        // it was originally meant for these target POs (deduction point not yet reached),
-        // so the factory simply deducts it earlier. Idle inventory is normally not touched.
-        const isPool = src.sourceType === 'c-order' || src.sourceType === 'preload';
-        const cap = isPool && src.reservedQty !== undefined ? src.reservedQty : src.qty;
+        // Pool inventory (C-order / Preload): the full Physical FG inventory can be
+        // requisitioned, including the idle portion.
+        const cap = src.qty;
         const qty = Math.min(cap, remainingTarget);
         if (qty > 0) {
           allocations.push({ targetId: target.id, sourceId: src.id, qty });
@@ -4205,6 +4204,13 @@
       // Source PO selection changed — results are stale until the user
       // clicks "Calculate Allocation" again.
       markAllocationStale();
+      // Also surface a recalc reminder inside the open source PO modal.
+      const modal = document.getElementById('source-po-modal');
+      const noteEl = document.getElementById('source-po-modal-note');
+      if (modal && noteEl && !modal.classList.contains('hidden') && !reservedModalState) {
+        noteEl.textContent = 'Selection changed — click Calculate Allocation to refresh matching results.';
+        noteEl.classList.remove('hidden');
+      }
     }
 
     function setSourceModalRegion(region) {
