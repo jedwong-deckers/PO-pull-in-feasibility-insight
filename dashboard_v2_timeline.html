@@ -3525,25 +3525,6 @@
         const colorCell = g.color_code || '-';
         const statusCell = g.po_production_status || '-';
         const regionCell = g.target_region || '-';
-        if (g.sizes.length === 1) {
-          const s = g.sizes[0];
-          html += '<tr class="hover:bg-gray-50' + dimCls + (g.isTarget ? ' bg-blue-50/60' : '') + '">'
-            + '<td class="px-3 py-2">' + seqBadge + '</td>'
-            + '<td class="px-3 py-2 font-medium text-gray-900"><span class="inline-block w-4 mr-1.5"></span>' + g.po + tag + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + brandCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + factoryCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + styleCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + colorCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + s.size + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + g.xfDate + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + statusCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + regionCell + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + g.poQty.toLocaleString() + '</td>'
-            + '<td class="px-3 py-2 text-gray-600">' + s.fg.toLocaleString() + '</td>'
-            + '<td class="px-3 py-2 text-right font-medium text-gray-900">' + s.qty.toLocaleString() + '</td>'
-            + '</tr>';
-          return;
-        }
         const cls = 'rsz-' + gi;
         const isOpen = expandedReservedGroups.has(g.po);
         html += '<tr class="po-group-row hover:bg-gray-50 cursor-pointer' + dimCls + (g.isTarget ? ' bg-blue-50/60' : '') + '" onclick="toggleGroupRowsTracked(this, \'' + cls + '\', expandedReservedGroups, \'' + jsStr(g.po) + '\')">'
@@ -3832,7 +3813,8 @@
       const sources = inventorySources.filter(s => s.sourceType === type && isSourcePOSelected(s)).sort((a, b) => {
         const ta = targetItems.find(t => t.id === a.targetId);
         const tb = targetItems.find(t => t.id === b.targetId);
-        return String(ta ? ta.xfDate : '').localeCompare(String(tb ? tb.xfDate : ''));
+        return String(ta ? ta.xfDate : '').localeCompare(String(tb ? tb.xfDate : ''))
+          || String(b.xfDate || '').localeCompare(String(a.xfDate || '')); // same target: later-dated source first
       });
       sources.forEach(src => {
         const target = targetItems.find(t => t.id === src.targetId);
@@ -4048,14 +4030,14 @@
       if (includeRegion && opt4ModalRegion !== 'ALL') {
         sources = sources.filter(s => (s.region || '-') === opt4ModalRegion);
       }
-      sources.sort((a, b) => new Date(a.xfDate) - new Date(b.xfDate));
+      sources.sort((a, b) => new Date(b.xfDate) - new Date(a.xfDate)); // latest Conf XF first — prefer borrowing later-dated POs
 
       const colSpan = includeRegion ? 11 : 10;
       // Allocated qty per source (from the current allocation plan)
       const allocBySourceId = {};
       allocations.forEach(a => { allocBySourceId[a.sourceId] = (allocBySourceId[a.sourceId] || 0) + a.qty; });
       sourceModalGroups = groupRowsByPO(sources, sourcePOGroupKey).map(g => ({ key: g.key, items: g.items, type: type }));
-      sourceModalGroups.sort((a, b) => new Date(a.items[0].xfDate) - new Date(b.items[0].xfDate));
+      sourceModalGroups.sort((a, b) => new Date(b.items[0].xfDate) - new Date(a.items[0].xfDate));
 
       const sPages = Math.max(1, Math.ceil(sourceModalGroups.length / TABLE_PAGE_SIZE));
       if (sourceModalPage > sPages) sourceModalPage = sPages;
